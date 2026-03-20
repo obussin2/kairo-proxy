@@ -1,0 +1,18 @@
+{
+  "pins": [
+    { "name": "YouTube", "url": "https://www.youtube.com" },
+    { "name": "Google", "url": "https://www.google.com" },
+    { "name": "Reddit", "url": "https://www.reddit.com" },
+    { "name": "Twitter", "url": "https://www.twitter.com" },
+    { "name": "GitHub", "url": "https://www.github.com" },
+    { "name": "Spotify", "url": "https://open.spotify.com" }
+  ],
+  "games": [
+    { "name": "CrazyGames", "url": "https://www.crazygames.com" },
+    { "name": "Coolmath", "url": "https://www.coolmathgames.com" },
+    { "name": "Silvergames", "url": "https://www.silvergames.com" },
+    { "name": "Pogo", "url": "https://www.pogo.com" },
+    { "name": "GamePix", "url": "https://www.gamepix.com" },
+    { "name": "itch.io", "url": "https://itch.io" }
+  ]
+}

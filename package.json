@@ -1,0 +1,17 @@
+{
+  "name": "osazee-proxy",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@mercuryworkshop/scramjet": "latest",
+    "wisp-server-node": "latest",
+    "express": "latest",
+    "mongoose": "latest",
+    "bcryptjs": "latest",
+    "express-session": "latest",
+    "dotenv": "latest"
+  }
+}
