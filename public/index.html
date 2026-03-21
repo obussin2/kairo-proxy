@@ -6,24 +6,15 @@
   <title>Kairo</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237b6ef6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='white'%3EK%3C/text%3E%3C/svg%3E"/>
   <link rel="stylesheet" href="/style.css"/>
-  <!-- Official scramjet all-in-one bundle -->
-  <script src="/scram/scramjet.all.js"></script>
-  <!-- BareMux transport layer -->
-  <script src="/baremux/index.js"></script>
-  <!-- SW registration utility -->
-  <script src="/register-sw.js"></script>
 </head>
 <body>
 
-<!-- Loader -->
 <div id="loader">
   <div class="loader-logo">Kairo</div>
   <div class="loader-bar"><div class="loader-bar-fill"></div></div>
 </div>
 
-<!-- Home UI -->
 <div id="home" style="display:none;">
-
   <nav class="nav">
     <a class="nav-brand" href="/">Kairo</a>
     <div class="nav-actions">
@@ -31,11 +22,11 @@
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         Admin
       </a>
-      <button class="nav-btn" onclick="clearSessions()">
+      <button class="nav-btn" id="reset-btn">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
         Reset
       </button>
-      <button class="nav-btn" onclick="logout()">
+      <button class="nav-btn" id="logout-btn">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Logout
       </button>
@@ -49,16 +40,8 @@
         <div class="hero-sub">Private Browsing</div>
       </div>
       <div class="search-wrap">
-        <input
-          type="text"
-          id="url-input"
-          class="search-input"
-          placeholder="Search or enter a URL…"
-          autocomplete="off"
-          autocorrect="off"
-          spellcheck="false"
-        />
-        <button class="search-go" onclick="go()" aria-label="Go">
+        <input type="text" id="url-input" class="search-input" placeholder="Search or enter a URL…" autocomplete="off" autocorrect="off" spellcheck="false"/>
+        <button class="search-go" id="go-btn" aria-label="Go">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
           </svg>
@@ -83,19 +66,17 @@
     </section>
   </main>
 
-  <footer class="footer-bar">
-    <span>Kairo &mdash; Private Browsing</span>
-  </footer>
+  <footer class="footer-bar"><span>Kairo &mdash; Private Browsing</span></footer>
 </div>
 
-<!-- Proxy frame view (fills screen when browsing) -->
+<!-- Proxy frame view -->
 <div id="proxy-view" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;">
   <div class="proxy-bar">
-    <button class="proxy-back" onclick="closeProxy()" title="Back to home">
+    <button class="proxy-back" id="close-proxy-btn" title="Back to home">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <div class="proxy-url" id="proxy-url-display">Loading…</div>
-    <button class="proxy-back" onclick="reloadProxy()" title="Reload">
+    <button class="proxy-back" id="reload-proxy-btn" title="Reload">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
     </button>
   </div>
@@ -106,254 +87,275 @@
 <div id="timeout-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,8,10,0.96);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
   <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:#e8ecf0;">Session expired</div>
   <div style="font-size:0.85rem;color:#5a6370;">You were inactive for 20 minutes</div>
-  <button onclick="location.href='/login.html'" style="margin-top:8px;padding:10px 24px;background:#7b6ef6;border:none;border-radius:10px;color:#fff;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Sign in again</button>
+  <button id="signin-again-btn" style="margin-top:8px;padding:10px 24px;background:#7b6ef6;border:none;border-radius:10px;color:#fff;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Sign in again</button>
 </div>
 
-<script type="module">
-  // ── Correct Scramjet API ───────────────────────────────
-  // ScramjetController comes from $scramjetLoadController()
-  // BareMux.BareMuxConnection comes from /baremux/index.js
-  const { ScramjetController } = $scramjetLoadController();
+<!-- Load scramjet and baremux BEFORE our script -->
+<script src="/scram/scramjet.all.js"></script>
+<script src="/baremux/index.js"></script>
+<script src="/register-sw.js"></script>
+<script src="/search.js"></script>
 
-  const scramjet = new ScramjetController({
-    files: {
-      wasm:   "/scram/scramjet.wasm.wasm",
-      all:    "/scram/scramjet.all.js",
-      sync:   "/scram/scramjet.sync.js",
-    },
-  });
+<script>
+// Always show UI — never let loader hang
+function showUI() {
+  document.getElementById("loader").style.display = "none";
+  document.getElementById("home").style.display = "block";
+}
 
-  scramjet.init();
+// Catch any uncaught errors so loader doesn't hang
+window.addEventListener("error", function(e) {
+  console.error("[Kairo] Error:", e.message);
+  showUI();
+});
+window.addEventListener("unhandledrejection", function(e) {
+  console.error("[Kairo] Unhandled rejection:", e.reason);
+  showUI();
+});
 
-  const WISP_URL = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
-  const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+var scramjet = null;
+var connection = null;
+var currentFrame = null;
+var swReady = false;
+var WISP_URL = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
 
-  let currentFrame = null;
+// ── Init scramjet ────────────────────────────────────────
+function initScramjet() {
+  try {
+    if (typeof $scramjetLoadController === "undefined") {
+      console.warn("[Kairo] $scramjetLoadController not available");
+      return;
+    }
+    var ctrl = $scramjetLoadController();
+    scramjet = new ctrl.ScramjetController({
+      files: {
+        wasm: "/scram/scramjet.wasm.wasm",
+        all:  "/scram/scramjet.all.js",
+        sync: "/scram/scramjet.sync.js",
+      },
+    });
+    scramjet.init();
+    console.log("[Kairo] Scramjet ready ✓");
+  } catch(e) {
+    console.error("[Kairo] Scramjet init failed:", e);
+  }
+}
 
-  // ── Auth check ─────────────────────────────────────────
-  const me = await fetch("/api/me").then(r => r.json()).catch(() => ({ loggedIn: false }));
-  if (!me.loggedIn) { location.href = "/login.html"; }
-  if (me.isAdmin) document.getElementById("admin-link").style.display = "inline-flex";
-
-  // ── Pre-warm transport ─────────────────────────────────
-  // Set transport immediately on load so it's ready before user navigates
-  async function prewarmTransport() {
-    try {
-      const current = await connection.getTransport();
+// ── Init BareMux ─────────────────────────────────────────
+function initBaremux() {
+  try {
+    if (typeof BareMux === "undefined") {
+      console.warn("[Kairo] BareMux not available");
+      return;
+    }
+    connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+    // Pre-warm transport immediately
+    connection.getTransport().then(function(current) {
       if (current !== "/libcurl/index.mjs") {
-        await connection.setTransport("/libcurl/index.mjs", [{ websocket: WISP_URL }]);
-        console.log("[Kairo] libcurl transport set ✓");
+        return connection.setTransport("/libcurl/index.mjs", [{ websocket: WISP_URL }]);
       }
-    } catch(e) {
+    }).then(function() {
+      console.log("[Kairo] Transport ready ✓");
+    }).catch(function(e) {
       console.warn("[Kairo] Transport prewarm failed:", e);
-    }
+    });
+  } catch(e) {
+    console.error("[Kairo] BareMux init failed:", e);
   }
+}
 
-  prewarmTransport();
+// ── Register SW ──────────────────────────────────────────
+function ensureSW() {
+  if (swReady) return Promise.resolve(true);
+  if (typeof registerSW === "undefined") return Promise.resolve(false);
+  return registerSW().then(function() {
+    swReady = true;
+    return true;
+  }).catch(function(e) {
+    showError("Service worker: " + e.message);
+    return false;
+  });
+}
 
-  // ── Register SW ────────────────────────────────────────
-  let swRegistered = false;
-  async function ensureSW() {
-    if (swRegistered) return true;
-    try {
-      await registerSW();
-      swRegistered = true;
-      return true;
-    } catch(e) {
-      showError("Service worker failed: " + e.message);
-      return false;
-    }
-  }
+// ── Navigate ─────────────────────────────────────────────
+function go() {
+  hideError();
+  var val = document.getElementById("url-input").value.trim();
+  if (!val) return;
+  val = search(val, "https://www.google.com/search?q=%s");
 
-  // ── Navigate ───────────────────────────────────────────
-  window.go = async function() {
-    hideError();
-    let val = document.getElementById("url-input").value.trim();
-    if (!val) return;
+  ensureSW().then(function(ok) {
+    if (!ok) { showError("Service worker not ready"); return; }
+    if (!scramjet) { showError("Proxy not ready yet — try again"); return; }
 
-    // Search or URL detection (uses official search.js logic)
-    val = search(val, "https://www.google.com/search?q=%s");
+    var setTransportPromise = connection
+      ? connection.getTransport().then(function(t) {
+          if (t !== "/libcurl/index.mjs") {
+            return connection.setTransport("/libcurl/index.mjs", [{ websocket: WISP_URL }]);
+          }
+        })
+      : Promise.resolve();
 
-    const ok = await ensureSW();
-    if (!ok) return;
+    setTransportPromise.then(function() {
+      openProxy(val);
+    }).catch(function(e) {
+      showError("Transport error: " + e.message);
+    });
+  });
+}
 
-    // Ensure transport is set
-    try {
-      const current = await connection.getTransport();
-      if (current !== "/libcurl/index.mjs") {
-        await connection.setTransport("/libcurl/index.mjs", [{ websocket: WISP_URL }]);
-      }
-    } catch(e) {}
+function goTo(url) {
+  document.getElementById("url-input").value = url;
+  go();
+}
 
-    openProxy(val);
-  };
-
-  window.goTo = function(url) {
-    document.getElementById("url-input").value = url;
-    go();
-  };
-
-  function openProxy(url) {
-    // Remove old frame
-    if (currentFrame) {
-      currentFrame.frame.remove();
-      currentFrame = null;
-    }
-
-    const container = document.getElementById("frame-container");
-    const frame = scramjet.createFrame();
+function openProxy(url) {
+  if (currentFrame) { currentFrame.frame.remove(); currentFrame = null; }
+  try {
+    var frame = scramjet.createFrame();
     frame.frame.style.cssText = "width:100%;height:100%;border:none;display:block;";
+    var container = document.getElementById("frame-container");
     container.innerHTML = "";
     container.appendChild(frame.frame);
     currentFrame = frame;
-
     document.getElementById("proxy-url-display").textContent = url;
     document.getElementById("proxy-view").style.display = "flex";
     document.getElementById("home").style.display = "none";
-
     frame.go(url);
     saveServerCookies();
+  } catch(e) {
+    showError("Failed to open proxy: " + e.message);
   }
+}
 
-  window.closeProxy = function() {
-    if (currentFrame) {
-      currentFrame.frame.remove();
-      currentFrame = null;
-    }
-    document.getElementById("proxy-view").style.display = "none";
-    document.getElementById("home").style.display = "block";
-  };
-
-  window.reloadProxy = function() {
-    if (currentFrame) currentFrame.frame.contentWindow?.location.reload();
-  };
-
-  function showError(msg) {
-    document.getElementById("error-msg").textContent = msg || "Something went wrong. Please try again.";
-    document.getElementById("error-toast").style.display = "flex";
-  }
-
-  function hideError() {
-    document.getElementById("error-toast").style.display = "none";
-  }
-
-  // ── Pins ───────────────────────────────────────────────
-  async function loadPins() {
-    try {
-      const data = await fetch("/api/pins").then(r => r.json());
-      document.getElementById("pins-grid").innerHTML = data.pins.map(p => `
-        <div class="pin" onclick="goTo('${p.url}')" title="${p.name}">
-          <img
-            src="https://cdn.simpleicons.org/${encodeURIComponent(p.icon)}/ffffff"
-            alt="${p.name}"
-            loading="lazy"
-            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%229%22 stroke=%22white%22 stroke-width=%221.5%22 fill=%22none%22/%3E%3C/svg%3E';this.style.opacity='0.3'"
-          />
-        </div>
-      `).join("");
-    } catch(e) {}
-  }
-
-  // ── Bookmarklets ───────────────────────────────────────
-  async function loadBookmarklets() {
-    try {
-      const items = await fetch("/api/bookmarklets").then(r => r.json());
-      const section = document.getElementById("bookmarklets-section");
-      if (!items.length) { section.style.display = "none"; return; }
-      section.style.display = "block";
-      document.getElementById("bookmarks-grid").innerHTML = items.map(b => `
-        <a class="bookmark-chip"
-          href="javascript:${encodeURIComponent(b.code)}"
-          title="${b.description || b.name}"
-          draggable="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/>
-          </svg>
-          ${b.name}
-        </a>
-      `).join("");
-    } catch(e) {}
-  }
-
-  // ── Cookie sync ────────────────────────────────────────
-  async function loadServerCookies() {
-    try {
-      const data = await fetch("/api/cookies").then(r => r.json());
-      if (!data.cookies) return;
-      data.cookies.split("||").forEach(entry => {
-        const [name, value] = entry.split("=:=");
-        if (name && value !== undefined)
-          document.cookie = `${decodeURIComponent(name)}=${decodeURIComponent(value)}; path=/; SameSite=Lax`;
-      });
-    } catch(e) {}
-  }
-
-  async function saveServerCookies() {
-    try {
-      const encoded = document.cookie.split(";")
-        .map(c => c.trim()).filter(Boolean)
-        .map(c => {
-          const idx = c.indexOf("=");
-          if (idx === -1) return null;
-          return `${encodeURIComponent(c.slice(0,idx).trim())}=:=${encodeURIComponent(c.slice(idx+1).trim())}`;
-        }).filter(Boolean).join("||");
-      if (!encoded) return;
-      await fetch("/api/cookies", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cookies: encoded }),
-        keepalive: true
-      });
-    } catch(e) {}
-  }
-
-  window.clearSessions = async function() {
-    document.cookie.split(";").forEach(c => {
-      const name = c.trim().split("=")[0];
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
-    });
-    await fetch("/api/cookies", { method: "DELETE" });
-    alert("All saved sessions cleared.");
-  };
-
-  // ── Auth ───────────────────────────────────────────────
-  window.logout = async function() {
-    await fetch("/api/logout", { method: "POST" });
-    location.href = "/login.html";
-  };
-
-  // ── Inactivity ─────────────────────────────────────────
-  const INACTIVE_MS = 20 * 60 * 1000;
-  let timer;
-  function resetTimer() {
-    clearTimeout(timer);
-    timer = setTimeout(async () => {
-      await fetch("/api/logout", { method: "POST" });
-      document.getElementById("timeout-overlay").style.display = "flex";
-    }, INACTIVE_MS);
-  }
-  ["mousemove","keydown","click","scroll","touchstart"].forEach(e =>
-    document.addEventListener(e, resetTimer, { passive: true })
-  );
-  resetTimer();
-
-  // ── Boot ───────────────────────────────────────────────
-  await loadServerCookies();
-  await Promise.all([loadPins(), loadBookmarklets()]);
-
-  document.getElementById("loader").style.display = "none";
+function closeProxy() {
+  if (currentFrame) { currentFrame.frame.remove(); currentFrame = null; }
+  document.getElementById("proxy-view").style.display = "none";
   document.getElementById("home").style.display = "block";
+}
 
-  setInterval(saveServerCookies, 15000);
-  window.addEventListener("beforeunload", saveServerCookies);
+function reloadProxy() {
+  try { currentFrame && currentFrame.frame.contentWindow.location.reload(); } catch(e) {}
+}
 
-  document.getElementById("url-input").addEventListener("keydown", e => {
-    if (e.key === "Enter") go();
+function showError(msg) {
+  document.getElementById("error-msg").textContent = msg || "Something went wrong.";
+  document.getElementById("error-toast").style.display = "flex";
+}
+
+function hideError() {
+  document.getElementById("error-toast").style.display = "none";
+}
+
+// ── Pins ─────────────────────────────────────────────────
+function loadPins() {
+  fetch("/api/pins").then(function(r) { return r.json(); }).then(function(data) {
+    document.getElementById("pins-grid").innerHTML = data.pins.map(function(p) {
+      return '<div class="pin" onclick="goTo(\'' + p.url + '\')" title="' + p.name + '">' +
+        '<img src="https://cdn.simpleicons.org/' + encodeURIComponent(p.icon) + '/ffffff" alt="' + p.name + '" loading="lazy"' +
+        ' onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%229%22 stroke=%22white%22 stroke-width=%221.5%22 fill=%22none%22/%3E%3C/svg%3E\';this.style.opacity=\'0.3\'"' +
+        '/></div>';
+    }).join("");
+  }).catch(function() {});
+}
+
+// ── Bookmarklets ─────────────────────────────────────────
+function loadBookmarklets() {
+  fetch("/api/bookmarklets").then(function(r) { return r.json(); }).then(function(items) {
+    var section = document.getElementById("bookmarklets-section");
+    if (!items.length) { section.style.display = "none"; return; }
+    section.style.display = "block";
+    document.getElementById("bookmarks-grid").innerHTML = items.map(function(b) {
+      return '<a class="bookmark-chip" href="javascript:' + encodeURIComponent(b.code) + '" title="' + (b.description || b.name) + '" draggable="true">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>' +
+        b.name + '</a>';
+    }).join("");
+  }).catch(function() {});
+}
+
+// ── Cookie sync ──────────────────────────────────────────
+function loadServerCookies() {
+  return fetch("/api/cookies").then(function(r) { return r.json(); }).then(function(data) {
+    if (!data.cookies) return;
+    data.cookies.split("||").forEach(function(entry) {
+      var parts = entry.split("=:=");
+      if (parts[0] && parts[1] !== undefined) {
+        document.cookie = decodeURIComponent(parts[0]) + "=" + decodeURIComponent(parts[1]) + "; path=/; SameSite=Lax";
+      }
+    });
+  }).catch(function() {});
+}
+
+function saveServerCookies() {
+  try {
+    var encoded = document.cookie.split(";").map(function(c) { return c.trim(); }).filter(Boolean).map(function(c) {
+      var idx = c.indexOf("=");
+      if (idx === -1) return null;
+      return encodeURIComponent(c.slice(0, idx).trim()) + "=:=" + encodeURIComponent(c.slice(idx + 1).trim());
+    }).filter(Boolean).join("||");
+    if (!encoded) return;
+    fetch("/api/cookies", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({cookies: encoded}), keepalive: true });
+  } catch(e) {}
+}
+
+function clearSessions() {
+  document.cookie.split(";").forEach(function(c) {
+    document.cookie = c.trim().split("=")[0] + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
   });
+  fetch("/api/cookies", { method: "DELETE" }).then(function() {
+    alert("All saved sessions cleared.");
+  });
+}
+
+// ── Auth ─────────────────────────────────────────────────
+function logout() {
+  fetch("/api/logout", { method: "POST" }).then(function() {
+    location.href = "/login.html";
+  });
+}
+
+// ── Inactivity ───────────────────────────────────────────
+var inactivityTimer;
+function resetTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(function() {
+    fetch("/api/logout", { method: "POST" }).then(function() {
+      document.getElementById("timeout-overlay").style.display = "flex";
+    });
+  }, 20 * 60 * 1000);
+}
+["mousemove","keydown","click","scroll","touchstart"].forEach(function(e) {
+  document.addEventListener(e, resetTimer, { passive: true });
+});
+
+// ── Button wiring ────────────────────────────────────────
+document.getElementById("go-btn").addEventListener("click", go);
+document.getElementById("logout-btn").addEventListener("click", logout);
+document.getElementById("reset-btn").addEventListener("click", clearSessions);
+document.getElementById("close-proxy-btn").addEventListener("click", closeProxy);
+document.getElementById("reload-proxy-btn").addEventListener("click", reloadProxy);
+document.getElementById("signin-again-btn").addEventListener("click", function() { location.href = "/login.html"; });
+document.getElementById("url-input").addEventListener("keydown", function(e) { if (e.key === "Enter") go(); });
+
+// ── Boot ─────────────────────────────────────────────────
+fetch("/api/me").then(function(r) { return r.json(); }).then(function(me) {
+  if (!me.loggedIn) { location.href = "/login.html"; return; }
+  if (me.isAdmin) document.getElementById("admin-link").style.display = "inline-flex";
+
+  initScramjet();
+  initBaremux();
+
+  loadServerCookies().then(function() {
+    loadPins();
+    loadBookmarklets();
+    resetTimer();
+    setInterval(saveServerCookies, 15000);
+    window.addEventListener("beforeunload", saveServerCookies);
+    showUI();
+  });
+}).catch(function() {
+  location.href = "/login.html";
+});
 </script>
-
-<!-- search.js from official scramjet-app — URL/search detection -->
-<script src="/search.js"></script>
-
 </body>
 </html>
