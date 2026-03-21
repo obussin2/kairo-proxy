@@ -14,59 +14,22 @@ if (cluster.isMaster || cluster.isPrimary) {
 }
 
 const express = require("express");
-const http = require("http");
-const https = require("https");
-const fs = require("fs");
-const path = require("path");
+const { createServer } = require("http");
 const { server: wisp } = require("@mercuryworkshop/wisp-js/server");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const session = require("express-session");
 const compression = require("compression");
+const path = require("path");
+const fs = require("fs");
 
 const app = express();
-
-// ── HTTPS cert detection ─────────────────────────────────
-// If Let's Encrypt certs exist use HTTPS, otherwise fall back to HTTP
-// (HTTP is fine during initial setup before you run certbot)
-const CERT_PATH = "/etc/letsencrypt/live";
-const DOMAIN = process.env.DOMAIN || "";
-let server;
-
-function tryLoadCerts() {
-  if (!DOMAIN) return null;
-  const certDir = `${CERT_PATH}/${DOMAIN}`;
-  try {
-    return {
-      key:  fs.readFileSync(`${certDir}/privkey.pem`),
-      cert: fs.readFileSync(`${certDir}/fullchain.pem`),
-    };
-  } catch {
-    return null;
-  }
-}
-
-const certs = tryLoadCerts();
-
-if (certs) {
-  // HTTPS server on 443
-  server = https.createServer(certs, app);
-  // Redirect HTTP → HTTPS
-  const httpApp = express();
-  httpApp.use((req, res) => {
-    res.redirect(301, `https://${req.headers.host}${req.url}`);
-  });
-  const httpServer = http.createServer(httpApp);
-  httpServer.listen(80, () => console.log("HTTP → HTTPS redirect on port 80"));
-  console.log(`Worker ${process.pid} — HTTPS mode`);
-} else {
-  // Plain HTTP (before certbot is set up)
-  server = http.createServer(app);
-  console.log(`Worker ${process.pid} — HTTP mode (run certbot to enable HTTPS)`);
-}
+const server = createServer(app);
 
 server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
+
+console.log(`Worker ${process.pid} started`);
 
 // ── MongoDB ──────────────────────────────────────────────
 mongoose.connect(process.env.MONGO_URI, {
@@ -80,6 +43,7 @@ mongoose.connect(process.env.MONGO_URI, {
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
   password: String,
+  displayName: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },
   proxyCookies: { type: String, default: "" }
 });
@@ -97,7 +61,7 @@ async function seedAdmin() {
   const existing = await User.findOne({ username: "admin" });
   if (!existing) {
     const hash = await bcrypt.hash("stu8976@admin", 10);
-    await User.create({ username: "admin", password: hash });
+    await User.create({ username: "admin", password: hash, displayName: "Osazee" });
     console.log("Admin user created");
   }
 }
@@ -110,19 +74,35 @@ app.use(session({
   secret: process.env.SESSION_SECRET || "kairo-secret",
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    secure: !!certs,
-    maxAge: 7 * 24 * 60 * 60 * 1000
-  }
+  cookie: { secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 }
 }));
 
-// ── Static files ─────────────────────────────────────────
-const scramjetDist = path.join(
-  path.dirname(require.resolve("@mercuryworkshop/scramjet")), "../dist"
-);
-app.use("/scramjet/", express.static(scramjetDist, {
-  maxAge: "7d", immutable: true, etag: true,
-}));
+// ── Scramjet static — try multiple path strategies ───────
+function findScramjetDist() {
+  const candidates = [
+    path.join(path.dirname(require.resolve("@mercuryworkshop/scramjet")), "../dist"),
+    path.join(__dirname, "node_modules/@mercuryworkshop/scramjet/dist"),
+    path.join(process.cwd(), "node_modules/@mercuryworkshop/scramjet/dist"),
+  ];
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p) && fs.existsSync(path.join(p, "scramjet.bundle.js"))) {
+        console.log(`Scramjet dist found at: ${p}`);
+        return p;
+      }
+    } catch(e) {}
+  }
+  console.warn("Scramjet dist not found — proxy navigation will not work");
+  return null;
+}
+
+const scramjetDist = findScramjetDist();
+if (scramjetDist) {
+  app.use("/scramjet/", express.static(scramjetDist, {
+    maxAge: "7d", immutable: true, etag: true,
+  }));
+}
+
 app.use(express.static(path.join(__dirname, "public"), {
   maxAge: "1m", etag: true,
 }));
@@ -163,7 +143,8 @@ app.post("/api/login", async (req, res) => {
   if (!match) return res.json({ success: false, error: "Invalid credentials" });
   req.session.isAdmin = username === "admin";
   req.session.username = username;
-  res.json({ success: true, isAdmin: req.session.isAdmin });
+  req.session.displayName = user.displayName || username;
+  res.json({ success: true, isAdmin: req.session.isAdmin, displayName: req.session.displayName });
 });
 
 app.post("/api/logout", (req, res) => {
@@ -173,9 +154,15 @@ app.post("/api/logout", (req, res) => {
 
 app.get("/api/me", (req, res) => {
   if (!req.session.username) return res.json({ loggedIn: false });
-  res.json({ loggedIn: true, username: req.session.username, isAdmin: !!req.session.isAdmin });
+  res.json({
+    loggedIn: true,
+    username: req.session.username,
+    displayName: req.session.displayName || req.session.username,
+    isAdmin: !!req.session.isAdmin
+  });
 });
 
+// ── Cookie sync ──────────────────────────────────────────
 app.get("/api/cookies", requireLogin, async (req, res) => {
   const user = await User.findOne({ username: req.session.username }, { proxyCookies: 1 });
   res.json({ cookies: user?.proxyCookies || "" });
@@ -184,32 +171,27 @@ app.get("/api/cookies", requireLogin, async (req, res) => {
 app.post("/api/cookies", requireLogin, async (req, res) => {
   const { cookies } = req.body;
   if (typeof cookies !== "string") return res.json({ success: false });
-  await User.updateOne(
-    { username: req.session.username },
-    { $set: { proxyCookies: cookies.slice(0, 65536) } }
-  );
+  await User.updateOne({ username: req.session.username }, { $set: { proxyCookies: cookies.slice(0, 65536) } });
   res.json({ success: true });
 });
 
 app.delete("/api/cookies", requireLogin, async (req, res) => {
-  await User.updateOne(
-    { username: req.session.username },
-    { $set: { proxyCookies: "" } }
-  );
+  await User.updateOne({ username: req.session.username }, { $set: { proxyCookies: "" } });
   res.json({ success: true });
 });
 
+// ── User management ──────────────────────────────────────
 app.get("/api/users", requireAdmin, async (req, res) => {
   const users = await User.find({}, { password: 0, proxyCookies: 0 });
   res.json(users);
 });
 
 app.post("/api/users", requireAdmin, async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, displayName } = req.body;
   if (!username || !password) return res.json({ success: false, error: "Missing fields" });
   try {
     const hash = await bcrypt.hash(password, 10);
-    await User.create({ username, password: hash });
+    await User.create({ username, password: hash, displayName: displayName || username });
     res.json({ success: true });
   } catch (e) {
     res.json({ success: false, error: "Username already exists" });
@@ -222,6 +204,7 @@ app.delete("/api/users/:username", requireAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
+// ── Bookmarklets ─────────────────────────────────────────
 app.get("/api/bookmarklets", requireLogin, async (req, res) => {
   const bookmarklets = await Bookmarklet.find({}).sort({ createdAt: -1 });
   res.json(bookmarklets);
@@ -243,14 +226,11 @@ app.delete("/api/bookmarklets/:id", requireAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-// ── Wisp WebSocket ───────────────────────────────────────
+// ── Wisp ─────────────────────────────────────────────────
 server.on("upgrade", (req, socket, head) => {
   socket.setNoDelay(true);
   wisp.routeRequest(req, socket, head);
 });
 
-// ── Start ────────────────────────────────────────────────
-const PORT = certs ? 443 : (process.env.PORT || 3000);
-server.listen(PORT, () =>
-  console.log(`Worker ${process.pid} listening on port ${PORT}`)
-);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Worker ${process.pid} listening on port ${PORT}`));
