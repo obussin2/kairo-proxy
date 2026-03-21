@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kairo</title>
+  <link rel="stylesheet" href="/style.css"/>
+  <script src="/scramjet/scramjet.bundle.js"></script>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-logo">Kairo</div>
+  <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+</div>
+
+<div id="nav-loader" style="display:none;"><div class="nav-bar"></div></div>
+
+<div id="main" style="display:none;">
+
+  <nav class="nav">
+    <a class="nav-brand" href="/">Kairo</a>
+    <div class="nav-actions">
+      <a class="nav-btn" href="/admin" id="admin-link" style="display:none;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Admin
+      </a>
+      <button class="nav-btn" onclick="clearCookies()" title="Clear all saved sessions">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
+        Reset
+      </button>
+      <button class="nav-btn" onclick="logout()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </div>
+  </nav>
+
+  <main class="page">
+
+    <section class="hero">
+      <div>
+        <div class="hero-heading">Kairo</div>
+        <div class="hero-sub">Private Browsing</div>
+      </div>
+      <div class="search-wrap">
+        <input
+          type="text"
+          id="url-input"
+          class="search-input"
+          placeholder="Search or enter a URL…"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+        <button class="search-go" onclick="go()" aria-label="Go">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+      </div>
+      <div class="error-toast" id="error-toast">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        Something went wrong. Please try again.
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Quick Access</div>
+      <div class="pins-grid" id="pins-grid"></div>
+    </section>
+
+    <section id="bookmarklets-section" style="display:none;">
+      <div class="section-label">Bookmarklets</div>
+      <div class="bookmarks-grid" id="bookmarks-grid"></div>
+    </section>
+
+  </main>
+
+  <footer class="footer-bar">
+    <span>Kairo &mdash; Private Browsing</span>
+  </footer>
+
+</div>
+
+<script>
+  let scram = null;
+
+  // ── Cross-device cookie sync ───────────────────────────
+  // On load: fetch saved cookies from MongoDB and inject them
+  // Every 15s + on unload: push current cookies back to MongoDB
+  // Reset button: wipe both local and server-side
+
+  async function loadServerCookies() {
+    try {
+      const res = await fetch("/api/cookies");
+      const data = await res.json();
+      if (!data.cookies) return;
+      // Inject each saved cookie back into the browser
+      data.cookies.split("||").forEach(entry => {
+        try {
+          const [name, value] = entry.split("=:=");
+          if (name && value !== undefined) {
+            document.cookie = `${decodeURIComponent(name)}=${decodeURIComponent(value)}; path=/; SameSite=Lax`;
+          }
+        } catch(e) {}
+      });
+      console.log("[Kairo] Cookies restored from server ✓");
+    } catch(e) {}
+  }
+
+  async function saveServerCookies() {
+    try {
+      // Encode cookies as "name=:=value||name=:=value" to survive JSON serialisation
+      const encoded = document.cookie
+        .split(";")
+        .map(c => c.trim())
+        .filter(c => c.length > 0)
+        .map(c => {
+          const idx = c.indexOf("=");
+          if (idx === -1) return null;
+          const name  = encodeURIComponent(c.slice(0, idx).trim());
+          const value = encodeURIComponent(c.slice(idx + 1).trim());
+          return `${name}=:=${value}`;
+        })
+        .filter(Boolean)
+        .join("||");
+
+      if (!encoded) return;
+
+      await fetch("/api/cookies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cookies: encoded }),
+        keepalive: true
+      });
+    } catch(e) {}
+  }
+
+  async function clearCookies() {
+    try {
+      // Wipe browser cookies
+      document.cookie.split(";").forEach(c => {
+        const name = c.trim().split("=")[0];
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+      });
+      // Wipe server-side
+      await fetch("/api/cookies", { method: "DELETE" });
+      alert("All saved sessions cleared across all your devices.");
+    } catch(e) {}
+  }
+
+  // ── Wisp pre-warm ──────────────────────────────────────
+  function prewarmWisp() {
+    const proto = location.protocol === "https:" ? "wss" : "ws";
+    try {
+      const ws = new WebSocket(`${proto}://${location.host}/wisp/`);
+      ws.addEventListener("open", () => console.log("[Kairo] Wisp pre-warmed ✓"));
+      ws.addEventListener("error", () => {});
+    } catch(e) {}
+  }
+
+  // ── Scramjet init ──────────────────────────────────────
+  function initScramjet() {
+    try {
+      scram = new ScramjetController({
+        prefix: "/scram/service/",
+        codec:  "/scramjet/scramjet.codecs.js",
+        worker: "/scramjet/scramjet.worker.js",
+        wispUrl: (location.protocol === "https:" ? "wss" : "ws") +
+                 "://" + location.host + "/wisp/",
+      });
+      scram.init();
+    } catch(e) {
+      console.warn("[Kairo] Scramjet init error:", e);
+    }
+  }
+
+  // ── Navigate ───────────────────────────────────────────
+  function go() {
+    document.getElementById("error-toast").style.display = "none";
+    let val = document.getElementById("url-input").value.trim();
+    if (!val) return;
+
+    if ((!val.includes(".") || val.includes(" ")) && !val.startsWith("http")) {
+      val = "https://www.google.com/search?q=" + encodeURIComponent(val);
+    } else if (!val.startsWith("http://") && !val.startsWith("https://")) {
+      val = "https://" + val;
+    }
+
+    if (!scram) { showError(); return; }
+
+    try {
+      document.getElementById("nav-loader").style.display = "block";
+      // Save cookies before navigating away
+      saveServerCookies();
+      location.href = scram.encodeUrl(val);
+    } catch(e) {
+      document.getElementById("nav-loader").style.display = "none";
+      showError();
+    }
+  }
+
+  function showError() {
+    document.getElementById("error-toast").style.display = "flex";
+  }
+
+  function goTo(url) {
+    document.getElementById("url-input").value = url;
+    go();
+  }
+
+  // ── Pins ───────────────────────────────────────────────
+  async function loadPins() {
+    try {
+      const res = await fetch("/api/pins");
+      const data = await res.json();
+      document.getElementById("pins-grid").innerHTML = data.pins.map(p => `
+        <div class="pin" onclick="goTo('${p.url}')" title="${p.name}">
+          <img
+            src="https://cdn.simpleicons.org/${encodeURIComponent(p.icon)}/ffffff"
+            alt="${p.name}"
+            loading="lazy"
+            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%229%22 stroke=%22white%22 stroke-width=%221.5%22 fill=%22none%22/%3E%3C/svg%3E';this.style.opacity='0.3'"
+          />
+        </div>
+      `).join("");
+    } catch(e) {}
+  }
+
+  // ── Bookmarklets ───────────────────────────────────────
+  async function loadBookmarklets() {
+    try {
+      const res = await fetch("/api/bookmarklets");
+      const items = await res.json();
+      const section = document.getElementById("bookmarklets-section");
+      if (!items.length) { section.style.display = "none"; return; }
+      section.style.display = "block";
+      document.getElementById("bookmarks-grid").innerHTML = items.map(b => `
+        <a class="bookmark-chip"
+          href="javascript:${encodeURIComponent(b.code)}"
+          title="${b.description || b.name}"
+          draggable="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/>
+          </svg>
+          ${b.name}
+        </a>
+      `).join("");
+    } catch(e) {}
+  }
+
+  // ── Auth ───────────────────────────────────────────────
+  async function logout() {
+    await fetch("/api/logout", { method: "POST" });
+    location.href = "/login.html";
+  }
+
+  // ── Boot ───────────────────────────────────────────────
+  prewarmWisp();
+
+  window.addEventListener("load", async () => {
+    initScramjet();
+
+    // Restore server cookies BEFORE scramjet starts routing
+    await loadServerCookies();
+
+    // Save cookies every 15 seconds
+    setInterval(saveServerCookies, 15000);
+
+    // Save on page unload (keepalive ensures it completes even as page closes)
+    window.addEventListener("beforeunload", saveServerCookies);
+
+    const [me] = await Promise.all([
+      fetch("/api/me").then(r => r.json()).catch(() => ({ loggedIn: false })),
+      loadPins(),
+      loadBookmarklets(),
+    ]);
+
+    if (me.isAdmin) {
+      document.getElementById("admin-link").style.display = "inline-flex";
+    }
+
+    setTimeout(() => {
+      document.getElementById("loader").style.display = "none";
+      document.getElementById("main").style.display = "block";
+    }, 700);
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("url-input").addEventListener("keydown", e => {
+      if (e.key === "Enter") go();
+    });
+  });
+</script>
+</body>
+</html>
