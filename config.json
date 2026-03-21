@@ -9,6 +9,6 @@
     { "name": "ChatGPT",     "url": "https://chat.openai.com",        "icon": "openai"    },
     { "name": "Amazon Luna", "url": "https://luna.amazon.com",        "icon": "amazon"    },
     { "name": "GeForce Now", "url": "https://play.geforcenow.com",    "icon": "nvidia"    },
-    { "name": "Blooket",     "url": "https://www.play.blooket.com",        "icon": "blooket"   }
+    { "name": "Blooket",     "url": "https://www.blooket.com",        "icon": "blooket"   }
   ]
 }
