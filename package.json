@@ -6,13 +6,13 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "@mercuryworkshop/scramjet": "latest",
+    "@mercuryworkshop/scramjet": "0.3.0",
     "@mercuryworkshop/wisp-js": "latest",
     "express": "latest",
     "mongoose": "^8.0.0",
     "bcryptjs": "latest",
     "express-session": "latest",
-    "dotenv": "latest",
-    "compression": "latest"
+    "compression": "latest",
+    "dotenv": "latest"
   }
 }
