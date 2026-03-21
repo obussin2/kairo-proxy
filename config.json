@@ -1,13 +1,13 @@
 {
   "pins": [
-    { "name": "YouTube",     "url": "https://www.youtube.com",      "icon": "youtube"   },
-    { "name": "Google",      "url": "https://www.google.com",       "icon": "google"    },
-    { "name": "Spotify",     "url": "https://open.spotify.com",     "icon": "spotify"   },
-    { "name": "Discord",     "url": "https://discord.com/app",      "icon": "discord"   },
-    { "name": "Instagram",   "url": "https://www.instagram.com",    "icon": "instagram" },
-    { "name": "TikTok",      "url": "https://www.tiktok.com",       "icon": "tiktok"    },
-    { "name": "ChatGPT",     "url": "https://chat.openai.com",      "icon": "openai"    },
-    { "name": "Amazon Luna", "url": "https://luna.amazon.com",      "icon": "amazon"    },
-    { "name": "GeForce Now", "url": "https://play.geforcenow.com",  "icon": "nvidia"    }
+    { "name": "YouTube",     "url": "https://www.youtube.com",      "icon": "youtube"    },
+    { "name": "Google",      "url": "https://www.google.com",       "icon": "google"     },
+    { "name": "Spotify",     "url": "https://open.spotify.com",     "icon": "spotify"    },
+    { "name": "Discord",     "url": "https://discord.com/app",      "icon": "discord"    },
+    { "name": "Instagram",   "url": "https://www.instagram.com",    "icon": "instagram"  },
+    { "name": "TikTok",      "url": "https://www.tiktok.com",       "icon": "tiktok"     },
+    { "name": "ChatGPT",     "url": "https://chat.openai.com",      "icon": "openai"     },
+    { "name": "Amazon Luna", "url": "https://luna.amazon.com",      "icon": "amazon"     },
+    { "name": "GeForce Now", "url": "https://play.geforcenow.com",  "icon": "nvidia"     }
   ]
 }
