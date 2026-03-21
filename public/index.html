@@ -4,9 +4,11 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Kairo</title>
-  <!-- K favicon as inline SVG data URI -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237b6ef6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='white'%3EK%3C/text%3E%3C/svg%3E"/>
   <link rel="stylesheet" href="/style.css"/>
+  <!-- Load codecs first so __scramjet$codecs is available -->
+  <script src="/scramjet/scramjet.codecs.js"></script>
+  <!-- Load the bundle rewriter -->
   <script src="/scramjet/scramjet.bundle.js"></script>
 </head>
 <body>
@@ -88,16 +90,37 @@
 </div>
 
 <!-- Inactivity timeout overlay -->
-<div id="timeout-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,8,10,0.95);z-index:99999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+<div id="timeout-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,8,10,0.96);z-index:99999;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
   <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:#e8ecf0;">Session expired</div>
   <div style="font-size:0.85rem;color:#5a6370;">You were inactive for 20 minutes</div>
   <button onclick="location.href='/login.html'" style="margin-top:8px;padding:10px 24px;background:#7b6ef6;border:none;border-radius:10px;color:#fff;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Sign in again</button>
 </div>
 
 <script>
-  let scram = null;
+  const PROXY_PREFIX = "/scram/service/";
+  const WISP_URL = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
+  let swReady = false;
 
-  // ── Inactivity auto-logout (20 minutes) ────────────────
+  // ── Auth check — redirect immediately if not logged in ─
+  async function checkAuth() {
+    try {
+      const res = await fetch("/api/me");
+      const me = await res.json();
+      if (!me.loggedIn) {
+        location.href = "/login.html";
+        return false;
+      }
+      if (me.isAdmin) {
+        document.getElementById("admin-link").style.display = "inline-flex";
+      }
+      return true;
+    } catch(e) {
+      location.href = "/login.html";
+      return false;
+    }
+  }
+
+  // ── Inactivity timer (20 min) ──────────────────────────
   const INACTIVE_MS = 20 * 60 * 1000;
   let inactivityTimer;
 
@@ -115,6 +138,103 @@
   ["mousemove","keydown","click","scroll","touchstart"].forEach(e =>
     document.addEventListener(e, resetTimer, { passive: true })
   );
+
+  // ── Wisp pre-warm ──────────────────────────────────────
+  function prewarmWisp() {
+    try {
+      const ws = new WebSocket(WISP_URL);
+      ws.addEventListener("open", () => console.log("[Kairo] Wisp pre-warmed ✓"));
+      ws.addEventListener("error", () => {});
+    } catch(e) {}
+  }
+
+  // ── Scramjet setup ─────────────────────────────────────
+  // Scramjet does NOT have ScramjetController.
+  // The correct API: set __scramjet$config, register SW, encode URLs manually.
+  async function initScramjet() {
+    try {
+      // Set the global config scramjet's service worker will read
+      self.__scramjet$config = {
+        prefix:  PROXY_PREFIX,
+        codec:   self.__scramjet$codecs.plain,
+        config:  "/scramjet/scramjet.config.js",
+        bundle:  "/scramjet/scramjet.bundle.js",
+        worker:  "/scramjet/scramjet.worker.js",
+        client:  "/scramjet/scramjet.client.js",
+        codecs:  "/scramjet/scramjet.codecs.js",
+        wispUrl: WISP_URL,
+      };
+
+      if (!("serviceWorker" in navigator)) {
+        console.error("[Kairo] Service workers not supported");
+        return false;
+      }
+
+      // Register the scramjet service worker
+      const reg = await navigator.serviceWorker.register(
+        "/scramjet/scramjet.worker.js",
+        { scope: PROXY_PREFIX }
+      );
+
+      // Wait for the SW to be active
+      await new Promise((resolve) => {
+        if (reg.active) { resolve(); return; }
+        const sw = reg.installing || reg.waiting;
+        if (sw) {
+          sw.addEventListener("statechange", (e) => {
+            if (e.target.state === "activated") resolve();
+          });
+        } else {
+          navigator.serviceWorker.addEventListener("controllerchange", resolve);
+        }
+        // Timeout fallback
+        setTimeout(resolve, 3000);
+      });
+
+      swReady = true;
+      console.log("[Kairo] Scramjet SW ready ✓");
+      return true;
+    } catch(e) {
+      console.error("[Kairo] Scramjet init failed:", e);
+      return false;
+    }
+  }
+
+  function encodeUrl(url) {
+    return PROXY_PREFIX + self.__scramjet$config.codec.encode(url);
+  }
+
+  // ── Navigate ───────────────────────────────────────────
+  function go() {
+    document.getElementById("error-toast").style.display = "none";
+    let val = document.getElementById("url-input").value.trim();
+    if (!val) return;
+
+    if ((!val.includes(".") || val.includes(" ")) && !val.startsWith("http")) {
+      val = "https://www.google.com/search?q=" + encodeURIComponent(val);
+    } else if (!val.startsWith("http://") && !val.startsWith("https://")) {
+      val = "https://" + val;
+    }
+
+    if (!swReady) {
+      document.getElementById("error-toast").style.display = "flex";
+      return;
+    }
+
+    try {
+      document.getElementById("nav-loader").style.display = "block";
+      saveServerCookies();
+      location.href = encodeUrl(val);
+    } catch(e) {
+      document.getElementById("nav-loader").style.display = "none";
+      document.getElementById("error-toast").style.display = "flex";
+    }
+  }
+
+  function goTo(url) {
+    document.getElementById("url-input").value = url;
+    go();
+  }
 
   // ── Cookie sync ────────────────────────────────────────
   async function loadServerCookies() {
@@ -157,84 +277,12 @@
   }
 
   async function clearCookies() {
-    try {
-      document.cookie.split(";").forEach(c => {
-        const name = c.trim().split("=")[0];
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
-      });
-      await fetch("/api/cookies", { method: "DELETE" });
-      alert("All saved sessions cleared across all your devices.");
-    } catch(e) {}
-  }
-
-  // ── Wisp pre-warm ──────────────────────────────────────
-  function prewarmWisp() {
-    const proto = location.protocol === "https:" ? "wss" : "ws";
-    try {
-      const ws = new WebSocket(`${proto}://${location.host}/wisp/`);
-      ws.addEventListener("open", () => console.log("[Kairo] Wisp pre-warmed ✓"));
-      ws.addEventListener("error", () => {});
-    } catch(e) {}
-  }
-
-  // ── Scramjet init — robust with retry ─────────────────
-  function initScramjet() {
-    // Check the bundle actually loaded
-    if (typeof ScramjetController === "undefined") {
-      console.error("[Kairo] ScramjetController not found — bundle may not have loaded");
-      return false;
-    }
-    try {
-      scram = new ScramjetController({
-        prefix: "/scram/service/",
-        codec:  "/scramjet/scramjet.codecs.js",
-        worker: "/scramjet/scramjet.worker.js",
-        wispUrl: (location.protocol === "https:" ? "wss" : "ws") +
-                 "://" + location.host + "/wisp/",
-      });
-      scram.init();
-      console.log("[Kairo] Scramjet initialized ✓");
-      return true;
-    } catch(e) {
-      console.error("[Kairo] Scramjet init error:", e);
-      return false;
-    }
-  }
-
-  // ── Navigate ───────────────────────────────────────────
-  function go() {
-    document.getElementById("error-toast").style.display = "none";
-    let val = document.getElementById("url-input").value.trim();
-    if (!val) return;
-
-    if ((!val.includes(".") || val.includes(" ")) && !val.startsWith("http")) {
-      val = "https://www.google.com/search?q=" + encodeURIComponent(val);
-    } else if (!val.startsWith("http://") && !val.startsWith("https://")) {
-      val = "https://" + val;
-    }
-
-    if (!scram) {
-      // Try reinitialising before giving up
-      if (!initScramjet()) { showError(); return; }
-    }
-
-    try {
-      document.getElementById("nav-loader").style.display = "block";
-      saveServerCookies();
-      location.href = scram.encodeUrl(val);
-    } catch(e) {
-      document.getElementById("nav-loader").style.display = "none";
-      showError();
-    }
-  }
-
-  function showError() {
-    document.getElementById("error-toast").style.display = "flex";
-  }
-
-  function goTo(url) {
-    document.getElementById("url-input").value = url;
-    go();
+    document.cookie.split(";").forEach(c => {
+      const name = c.trim().split("=")[0];
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+    });
+    await fetch("/api/cookies", { method: "DELETE" });
+    alert("All saved sessions cleared across all your devices.");
   }
 
   // ── Pins ───────────────────────────────────────────────
@@ -287,28 +335,30 @@
   prewarmWisp();
 
   window.addEventListener("load", async () => {
-    initScramjet();
-    await loadServerCookies();
-    setInterval(saveServerCookies, 15000);
-    window.addEventListener("beforeunload", saveServerCookies);
+    // Auth check first — redirect if not logged in
+    const authed = await checkAuth();
+    if (!authed) return;
 
-    const [me] = await Promise.all([
-      fetch("/api/me").then(r => r.json()).catch(() => ({ loggedIn: false })),
+    // Restore cookies before SW init
+    await loadServerCookies();
+
+    // Init scramjet in parallel with UI data
+    const [swOk] = await Promise.all([
+      initScramjet(),
       loadPins(),
       loadBookmarklets(),
     ]);
 
-    if (me.isAdmin) {
-      document.getElementById("admin-link").style.display = "inline-flex";
+    if (!swOk) {
+      console.warn("[Kairo] Proxy not available");
     }
 
-    // Start inactivity timer
+    setInterval(saveServerCookies, 15000);
+    window.addEventListener("beforeunload", saveServerCookies);
     resetTimer();
 
-    setTimeout(() => {
-      document.getElementById("loader").style.display = "none";
-      document.getElementById("main").style.display = "block";
-    }, 700);
+    document.getElementById("loader").style.display = "none";
+    document.getElementById("main").style.display = "block";
   });
 
   document.addEventListener("DOMContentLoaded", () => {
