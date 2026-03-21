@@ -174,6 +174,13 @@ app.use("/uv/", express.static(uvPath));
 app.use("/epoxy/", express.static(epoxyPath));
 app.use("/baremux/", express.static(baremuxPath));
 
+// UV service paths — return empty page so SW can take over
+app.get("/uv/service/*", (req, res) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  res.send("<!DOCTYPE html><html><head></head><body></body></html>");
+});
+
 app.use((req, res) => {
   res.status(404).sendFile(join(publicPath, "404.html"));
 });
