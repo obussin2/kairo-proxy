@@ -97,6 +97,10 @@
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
         Reset
       </button>
+      <button class="nav-btn" id="settings-btn">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
       <button class="nav-btn" id="logout-btn">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Logout
@@ -120,17 +124,7 @@
           </svg>
         </button>
       </div>
-      <!-- Tab cloak button — prominent, on home page -->
-      <button onclick="tabCloak()" style="
-        display:inline-flex;align-items:center;gap:7px;
-        background:none;border:1px solid #1c2028;border-radius:8px;
-        color:#5a6370;font-size:0.78rem;font-family:'DM Sans',sans-serif;
-        padding:6px 14px;cursor:pointer;transition:all 0.15s;margin-top:-8px;
-      " onmouseover="this.style.borderColor='#7b6ef6';this.style.color='#e8ecf0'"
-         onmouseout="this.style.borderColor='#1c2028';this.style.color='#5a6370'">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-        Cloak Tab (opens Google decoy)
-      </button>
+
 
       <div class="error-toast" id="error-toast" style="display:none;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -145,6 +139,47 @@
     </section>
   </main>
   <footer class="footer-bar"><span>Kairo &mdash; Private Browsing</span></footer>
+</div>
+
+<!-- Settings modal -->
+<div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,8,10,0.85);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
+  <div style="background:#0e1014;border:1px solid #1c2028;border-radius:18px;padding:28px;width:100%;max-width:400px;margin:20px;box-shadow:0 24px 64px rgba(0,0,0,0.5);animation:cardIn 0.25s cubic-bezier(0.16,1,0.3,1) both;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <div style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:#e8ecf0;">Settings</div>
+      <button id="settings-close" style="background:none;border:none;color:#5a6370;cursor:pointer;padding:4px;border-radius:6px;transition:color 0.15s;" onmouseover="this.style.color='#e8ecf0'" onmouseout="this.style.color='#5a6370'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Site Cloak -->
+    <div style="margin-bottom:20px;">
+      <div style="font-size:0.72rem;font-weight:600;color:#5a6370;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;">Site Cloak</div>
+      <div style="font-size:0.8rem;color:#5a6370;margin-bottom:12px;">Changes the tab title and favicon to disguise this site.</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div>
+          <label style="font-size:0.72rem;color:#8a94a0;display:block;margin-bottom:4px;">Tab Title</label>
+          <input type="text" id="cloak-title" placeholder="e.g. Google Classroom" autocomplete="off"
+            style="width:100%;background:#13161b;border:1px solid #1c2028;border-radius:8px;color:#e8ecf0;font-size:0.88rem;font-family:'DM Sans',sans-serif;padding:8px 12px;outline:none;transition:border-color 0.15s;"
+            onfocus="this.style.borderColor='#7b6ef6'" onblur="this.style.borderColor='#1c2028'"/>
+        </div>
+        <div>
+          <label style="font-size:0.72rem;color:#8a94a0;display:block;margin-bottom:4px;">Favicon URL</label>
+          <input type="text" id="cloak-favicon" placeholder="e.g. https://classroom.google.com/favicon.ico" autocomplete="off"
+            style="width:100%;background:#13161b;border:1px solid #1c2028;border-radius:8px;color:#e8ecf0;font-size:0.88rem;font-family:'DM Sans',sans-serif;padding:8px 12px;outline:none;transition:border-color 0.15s;"
+            onfocus="this.style.borderColor='#7b6ef6'" onblur="this.style.borderColor='#1c2028'"/>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button id="cloak-apply-btn" style="flex:1;padding:8px;background:#7b6ef6;border:none;border-radius:8px;color:#fff;font-size:0.83rem;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#9d92fa'" onmouseout="this.style.background='#7b6ef6'">Apply Cloak</button>
+          <button id="cloak-reset-btn" style="flex:1;padding:8px;background:none;border:1px solid #1c2028;border-radius:8px;color:#5a6370;font-size:0.83rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#5a6370';this.style.color='#e8ecf0'" onmouseout="this.style.borderColor='#1c2028';this.style.color='#5a6370'">Remove Cloak</button>
+        </div>
+        <!-- Quick presets -->
+        <div style="margin-top:6px;">
+          <div style="font-size:0.68rem;color:#3a4050;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.1em;">Quick Presets</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;" id="cloak-presets"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Proxy view — nav bar + bookmark bar only, frame is appended to body separately -->
@@ -214,33 +249,7 @@ var scramjet = null, connection = null, currentFrame = null;
 var swReady = false, bookmarklets = [], progressTimer = null;
 var bmBarVisible = false;
 
-// ── Tab cloak ─────────────────────────────────────────────
-// Two modes:
-// 1. Panic key (Escape x2) — instantly replaces current tab title + favicon with Google
-// 2. Cloak Tab button — opens a fake about:blank decoy tab, keeps current tab working
-var _panicCount = 0, _panicTimer = null;
 
-function tabCloak() {
-  // Open a decoy about:blank tab — this is what someone glancing sees
-  var decoy = window.open("about:blank", "_blank");
-  if (!decoy) { alert("Allow popups for this site to use tab cloaking."); return; }
-  // Write a convincing Google-like page into the decoy
-  decoy.document.open();
-  decoy.document.write('<!DOCTYPE html><html><head><title>Google</title>' +
-    '<link rel="icon" href="https://www.google.com/favicon.ico"/>' +
-    '<style>body{margin:0;background:#fff;font-family:arial,sans-serif;display:flex;flex-direction:column;align-items:center;padding-top:100px;}' +
-    'input{width:450px;padding:12px 16px;border:1px solid #dfe1e5;border-radius:24px;font-size:16px;outline:none;}' +
-    'input:focus{border-color:#4285f4;box-shadow:0 1px 6px rgba(32,33,36,.28);}' +
-    '.logo{margin-bottom:28px;}</style></head>' +
-    '<body><img class="logo" src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png" width="272" height="92"/>' +
-    '<input type="text" placeholder="Search Google or type a URL"/></body></html>');
-  decoy.document.close();
-
-  // Also disguise THIS tab in case someone looks at the tab strip
-  document.title = "Google";
-  var link = document.querySelector("link[rel~='icon']");
-  if (link) link.href = "https://www.google.com/favicon.ico";
-}
 
 // ── Progress ──────────────────────────────────────────────
 function startProgress(url) {
@@ -499,6 +508,84 @@ document.getElementById("logout-btn").addEventListener("click",logout);
 document.getElementById("reset-btn").addEventListener("click",clearSessions);
 document.getElementById("signin-again-btn").addEventListener("click",function(){location.href="/login.html";});
 document.getElementById("url-input").addEventListener("keydown",function(e){if(e.key==="Enter")go();});
+
+// ── Settings & Site Cloak ─────────────────────────────────
+var CLOAK_PRESETS = [
+  { label: "Google Classroom", title: "Google Classroom", favicon: "https://ssl.gstatic.com/classroom/favicon.png" },
+  { label: "Khan Academy",     title: "Khan Academy",     favicon: "https://www.khanacademy.org/favicon.ico" },
+  { label: "Kahoot",           title: "Kahoot!",           favicon: "https://kahoot.com/favicon.ico" },
+  { label: "Quizlet",          title: "Quizlet",           favicon: "https://quizlet.com/favicon.ico" },
+  { label: "Google Docs",      title: "Google Docs",      favicon: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico" },
+];
+
+// Render presets
+(function() {
+  var container = document.getElementById("cloak-presets");
+  if (!container) return;
+  CLOAK_PRESETS.forEach(function(p) {
+    var btn = document.createElement("button");
+    btn.textContent = p.label;
+    btn.style.cssText = "background:none;border:1px solid #1c2028;border-radius:6px;color:#5a6370;font-size:0.72rem;font-family:'DM Sans',sans-serif;padding:3px 9px;cursor:pointer;transition:all 0.12s;";
+    btn.onmouseover = function(){ this.style.borderColor="#7b6ef6"; this.style.color="#e8ecf0"; };
+    btn.onmouseout  = function(){ this.style.borderColor="#1c2028"; this.style.color="#5a6370"; };
+    btn.addEventListener("click", function() {
+      document.getElementById("cloak-title").value = p.title;
+      document.getElementById("cloak-favicon").value = p.favicon;
+    });
+    container.appendChild(btn);
+  });
+})();
+
+function applyCloak() {
+  var title   = document.getElementById("cloak-title").value.trim();
+  var favicon = document.getElementById("cloak-favicon").value.trim();
+  if (title) {
+    document.title = title;
+    try { localStorage.setItem("kairo_cloak_title", title); } catch(e){}
+  }
+  if (favicon) {
+    var link = document.querySelector("link[rel~='icon']");
+    if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
+    link.href = favicon;
+    try { localStorage.setItem("kairo_cloak_favicon", favicon); } catch(e){}
+  }
+  document.getElementById("settings-overlay").style.display = "none";
+}
+
+function removeCloak() {
+  document.title = "Kairo";
+  var link = document.querySelector("link[rel~='icon']");
+  if (link) link.href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237b6ef6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='white'%3EK%3C/text%3E%3C/svg%3E";
+  try { localStorage.removeItem("kairo_cloak_title"); localStorage.removeItem("kairo_cloak_favicon"); } catch(e){}
+  document.getElementById("cloak-title").value = "";
+  document.getElementById("cloak-favicon").value = "";
+}
+
+// Restore saved cloak on page load
+(function() {
+  try {
+    var t = localStorage.getItem("kairo_cloak_title");
+    var f = localStorage.getItem("kairo_cloak_favicon");
+    if (t) { document.title = t; document.getElementById("cloak-title").value = t; }
+    if (f) {
+      var link = document.querySelector("link[rel~='icon']");
+      if (link) link.href = f;
+      document.getElementById("cloak-favicon").value = f;
+    }
+  } catch(e){}
+})();
+
+document.getElementById("settings-btn").addEventListener("click", function() {
+  document.getElementById("settings-overlay").style.display = "flex";
+});
+document.getElementById("settings-close").addEventListener("click", function() {
+  document.getElementById("settings-overlay").style.display = "none";
+});
+document.getElementById("settings-overlay").addEventListener("click", function(e) {
+  if (e.target === this) this.style.display = "none";
+});
+document.getElementById("cloak-apply-btn").addEventListener("click", applyCloak);
+document.getElementById("cloak-reset-btn").addEventListener("click", removeCloak);
 
 // ── Boot ──────────────────────────────────────────────────
 // Run auth check and asset loads in parallel for fastest startup
