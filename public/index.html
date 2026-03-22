@@ -6,103 +6,61 @@
   <title>Kairo</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237b6ef6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='white'%3EK%3C/text%3E%3C/svg%3E"/>
   <link rel="stylesheet" href="/style.css"/>
+  <!-- Load scramjet + baremux before anything else -->
   <script src="/scram/scramjet.all.js"></script>
   <script src="/baremux/index.js"></script>
   <style>
-    .pin img {
-      width: 18px; height: 18px;
-      filter: brightness(0) invert(1);
-      opacity: 0.82; transition: opacity 0.15s;
-    }
-    .pin:hover img { opacity: 1; }
-
+    .pin img { width:18px;height:18px;filter:brightness(0) invert(1);opacity:0.82;transition:opacity 0.15s; }
+    .pin:hover img { opacity:1; }
     .proxy-url-input {
-      flex: 1; background: rgba(19,22,27,0.8);
-      border: 1px solid #1c2028; border-radius: 8px;
-      color: #8a94a0; font-size: 0.78rem;
-      font-family: 'DM Sans', sans-serif;
-      padding: 4px 10px; outline: none; min-width: 0;
-      transition: border-color 0.15s, color 0.15s;
+      flex:1;background:rgba(19,22,27,0.8);border:1px solid #1c2028;border-radius:8px;
+      color:#8a94a0;font-size:0.78rem;font-family:'DM Sans',sans-serif;
+      padding:4px 10px;outline:none;min-width:0;transition:border-color 0.15s,color 0.15s;
     }
-    .proxy-url-input:focus { border-color: #7b6ef6; color: #e8ecf0; }
+    .proxy-url-input:focus { border-color:#7b6ef6;color:#e8ecf0; }
 
     /* ── Bookmark bar ── */
     #bookmark-bar {
-      display: none;
-      align-items: center;
-      gap: 4px;
-      padding: 0 10px;
-      height: 32px;
-      background: #0b0d10;
-      border-bottom: 1px solid #1c2028;
-      overflow-x: auto;
-      flex-shrink: 0;
-      scrollbar-width: none;
+      align-items:center;gap:2px;padding:0 8px;
+      height:30px;background:#0b0d10;
+      border-bottom:1px solid #1c2028;
+      overflow-x:auto;flex-shrink:0;
+      scrollbar-width:none;display:none;
     }
-    #bookmark-bar::-webkit-scrollbar { display: none; }
-    #bookmark-bar.has-items { display: flex; }
-
+    #bookmark-bar::-webkit-scrollbar { display:none; }
+    #bookmark-bar.visible { display:flex; }
     .bm-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 10px;
-      border-radius: 5px;
-      border: none;
-      background: transparent;
-      color: #8a94a0;
-      font-size: 0.76rem;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.12s, color 0.12s;
-      flex-shrink: 0;
+      display:inline-flex;align-items:center;gap:4px;padding:2px 9px;
+      border-radius:5px;border:none;background:transparent;
+      color:#8a94a0;font-size:0.74rem;font-family:'DM Sans',sans-serif;
+      cursor:pointer;white-space:nowrap;flex-shrink:0;
+      transition:background 0.12s,color 0.12s;
     }
-    .bm-btn:hover {
-      background: rgba(123,110,246,0.12);
-      color: #e8ecf0;
-    }
-    .bm-btn svg {
-      width: 11px; height: 11px;
-      opacity: 0.5; flex-shrink: 0;
-    }
-    .bm-btn:hover svg { opacity: 1; }
+    .bm-btn:hover { background:rgba(123,110,246,0.12);color:#e8ecf0; }
+    .bm-btn svg { width:10px;height:10px;opacity:0.5;flex-shrink:0; }
+    .bm-btn:hover svg { opacity:1; }
 
     /* ── Frame loading overlay ── */
     #frame-loader {
-      position: absolute; inset: 0;
-      background: #07080a;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 16px; z-index: 10;
-      transition: opacity 0.3s;
+      position:absolute;inset:0;background:#07080a;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:14px;z-index:10;transition:opacity 0.25s;
     }
-    #frame-loader.hidden { opacity: 0; pointer-events: none; }
-    .frame-loader-bar {
-      width: 180px; height: 2px;
-      background: #1c2028; border-radius: 2px; overflow: hidden;
-    }
+    #frame-loader.hidden { opacity:0;pointer-events:none; }
+    .frame-loader-bar { width:160px;height:2px;background:#1c2028;border-radius:2px;overflow:hidden; }
     .frame-loader-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #7b6ef6, #9d92fa);
-      border-radius: 2px;
-      animation: framebarfill 1.2s ease-in-out infinite;
+      height:100%;background:linear-gradient(90deg,#7b6ef6,#9d92fa);border-radius:2px;
+      animation:fbar 1.1s ease-in-out infinite;
     }
-    @keyframes framebarfill {
-      0% { width:0%;margin-left:0% }
-      50% { width:60%;margin-left:20% }
-      100% { width:0%;margin-left:100% }
-    }
-    .frame-loader-text { font-size:0.78rem;color:#5a6370;font-family:'DM Sans',sans-serif;letter-spacing:0.06em; }
-    .frame-loader-url { font-size:0.72rem;color:#3a4050;font-family:'DM Sans',sans-serif;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    @keyframes fbar { 0%{width:0%;margin-left:0%} 50%{width:55%;margin-left:22%} 100%{width:0%;margin-left:100%} }
+    .frame-loader-text { font-size:0.75rem;color:#5a6370;font-family:'DM Sans',sans-serif; }
+    .frame-loader-url { font-size:0.68rem;color:#353d4a;font-family:'DM Sans',sans-serif;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 
     /* ── Top progress bar ── */
     #top-progress {
-      position: absolute; top:0; left:0;
-      height: 2px;
-      background: linear-gradient(90deg, #7b6ef6, #9d92fa);
-      width: 0%; transition: width 0.3s ease;
-      z-index: 20; border-radius: 0 2px 2px 0;
+      position:absolute;top:0;left:0;height:2px;
+      background:linear-gradient(90deg,#7b6ef6,#9d92fa);
+      width:0%;transition:width 0.25s ease;z-index:20;border-radius:0 2px 2px 0;
     }
   </style>
 
@@ -110,13 +68,12 @@
     var _uiShown = false;
     function showUI() {
       if (_uiShown) return; _uiShown = true;
-      var l = document.getElementById("loader"), h = document.getElementById("home");
-      if (l) l.style.display = "none";
-      if (h) h.style.display = "block";
+      var l=document.getElementById("loader"), h=document.getElementById("home");
+      if (l) l.style.display="none"; if (h) h.style.display="block";
     }
     setTimeout(showUI, 5000);
-    window.addEventListener("error", function(e){ console.error("[Kairo]",e.message); showUI(); });
-    window.addEventListener("unhandledrejection", function(e){ console.error("[Kairo]",e.reason); showUI(); });
+    window.addEventListener("error", function(e){ showUI(); });
+    window.addEventListener("unhandledrejection", function(e){ showUI(); });
   </script>
 </head>
 <body>
@@ -180,28 +137,46 @@
 <!-- Proxy view -->
 <div id="proxy-view" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;background:#07080a;">
 
-  <!-- Nav bar -->
-  <div class="proxy-bar" style="position:relative;">
+  <!-- URL / nav bar -->
+  <div class="proxy-bar" style="position:relative;gap:6px;">
     <div id="top-progress"></div>
+
+    <!-- Back / Fwd -->
     <button class="proxy-back" id="proxy-back-btn" title="Back">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <button class="proxy-back" id="proxy-fwd-btn" title="Forward">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
+
+    <!-- URL bar -->
     <input id="proxy-url-bar" class="proxy-url-input" placeholder="Enter URL…" autocomplete="off" spellcheck="false"/>
+
+    <!-- Reload -->
     <button class="proxy-back" id="proxy-reload-btn" title="Reload">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
     </button>
+
+    <!-- Toggle bookmark bar -->
+    <button class="proxy-back" id="bm-bar-toggle-btn" title="Toggle bookmarks">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>
+    </button>
+
+    <!-- Tab cloak -->
+    <button class="proxy-back" id="cloak-btn" title="Tab cloak (about:blank)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+    </button>
+
+    <!-- Home -->
     <button class="proxy-back" id="proxy-home-btn" title="Home">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </button>
   </div>
 
-  <!-- Bookmark bar — sits between nav and frame -->
+  <!-- Bookmark bar (hidden by default, toggle with button) -->
   <div id="bookmark-bar"></div>
 
-  <!-- Frame -->
+  <!-- Page frame -->
   <div id="frame-container" style="flex:1;overflow:hidden;position:relative;">
     <div id="frame-loader">
       <div class="frame-loader-bar"><div class="frame-loader-fill"></div></div>
@@ -223,223 +198,188 @@
 <script src="/search.js"></script>
 
 <script>
-var GEO_PARAMS = "hl=en&gl=US";
-var SEARCH_ENGINE = "https://www.google.com/search?q=%s&" + GEO_PARAMS;
-var WISP_URL = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
-var scramjet = null;
-var connection = null;
-var currentFrame = null;
-var swReady = false;
-var bookmarklets = [];
-var progressTimer = null;
+// ── Constants ─────────────────────────────────────────────
+var SEARCH_ENGINE = "https://www.google.com/search?q=%s&hl=en&gl=US";
+var WISP_URL = (location.protocol==="https:"?"wss":"ws")+"://"+location.host+"/wisp/";
 
-// ── Progress bar ──────────────────────────────────────────
-function startProgress(url) {
-  var bar = document.getElementById("top-progress");
-  var loader = document.getElementById("frame-loader");
-  var loaderUrl = document.getElementById("frame-loader-url");
-  if (loaderUrl) loaderUrl.textContent = url || "";
-  if (loader) loader.classList.remove("hidden");
-  clearInterval(progressTimer);
-  var pct = 0;
-  if (bar) { bar.style.width = "0%"; }
-  progressTimer = setInterval(function() {
-    pct = pct + (85 - pct) * 0.08;
-    if (bar) bar.style.width = pct + "%";
-  }, 150);
+// ── State ─────────────────────────────────────────────────
+var scramjet = null, connection = null, currentFrame = null;
+var swReady = false, bookmarklets = [], progressTimer = null;
+var bmBarVisible = false;
+
+// ── Tab cloak ─────────────────────────────────────────────
+// Opens a real about:blank window and renders Kairo inside it via srcdoc
+// Teacher/admin sees about:blank in the address bar
+function tabCloak() {
+  var w = window.open("about:blank", "_blank");
+  if (!w) { alert("Allow popups for this site to use tab cloaking."); return; }
+  var html = document.documentElement.outerHTML;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  // Close this tab so only the cloaked one remains
+  window.close();
 }
 
-function finishProgress() {
-  var bar = document.getElementById("top-progress");
-  var loader = document.getElementById("frame-loader");
+// ── Progress ──────────────────────────────────────────────
+function startProgress(url) {
+  var bar=document.getElementById("top-progress");
+  var loader=document.getElementById("frame-loader");
+  var lu=document.getElementById("frame-loader-url");
+  if (lu) lu.textContent=url||"";
+  if (loader) loader.classList.remove("hidden");
   clearInterval(progressTimer);
-  if (bar) {
-    bar.style.width = "100%";
-    setTimeout(function() { if (bar) bar.style.width = "0%"; }, 400);
-  }
-  if (loader) setTimeout(function() { loader.classList.add("hidden"); }, 300);
+  var pct=0; if (bar) bar.style.width="0%";
+  progressTimer=setInterval(function(){ pct=pct+(85-pct)*0.07; if(bar) bar.style.width=pct+"%"; },180);
+}
+function finishProgress() {
+  var bar=document.getElementById("top-progress"), loader=document.getElementById("frame-loader");
+  clearInterval(progressTimer);
+  if (bar){bar.style.width="100%"; setTimeout(function(){bar.style.width="0%";},350);}
+  if (loader) setTimeout(function(){loader.classList.add("hidden");},250);
 }
 
 // ── Scramjet ──────────────────────────────────────────────
 function initScramjet() {
   try {
-    if (typeof $scramjetLoadController !== "function") return;
-    var ctrl = $scramjetLoadController();
-    scramjet = new ctrl.ScramjetController({
-      files: {
-        wasm: "/scram/scramjet.wasm.wasm",
-        all:  "/scram/scramjet.all.js",
-        sync: "/scram/scramjet.sync.js",
-      },
+    if (typeof $scramjetLoadController!=="function") return;
+    var ctrl=$scramjetLoadController();
+    scramjet=new ctrl.ScramjetController({
+      files:{wasm:"/scram/scramjet.wasm.wasm",all:"/scram/scramjet.all.js",sync:"/scram/scramjet.sync.js"}
     });
     scramjet.init();
-    console.log("[Kairo] Scramjet ✓");
-  } catch(e) { console.error("[Kairo] Scramjet:", e); }
+  } catch(e){ console.error("[Kairo] SJ:",e); }
 }
 
 // ── BareMux ───────────────────────────────────────────────
 function getConn() {
-  if (!connection) {
-    try { connection = new BareMux.BareMuxConnection("/baremux/worker.js"); }
-    catch(e) { return null; }
-  }
+  if (!connection) try { connection=new BareMux.BareMuxConnection("/baremux/worker.js"); } catch(e){ return null; }
   return connection;
 }
-
 function ensureTransport() {
-  var conn = getConn();
-  if (!conn) return Promise.resolve();
-  return conn.getTransport().then(function(t) {
-    if (t !== "/libcurl/index.mjs")
-      return conn.setTransport("/libcurl/index.mjs", [{ websocket: WISP_URL }]);
+  var c=getConn(); if (!c) return Promise.resolve();
+  return c.getTransport().then(function(t){
+    if (t!=="/libcurl/index.mjs") return c.setTransport("/libcurl/index.mjs",[{websocket:WISP_URL}]);
   }).catch(function(){});
 }
 
 // ── SW ────────────────────────────────────────────────────
 function ensureSW() {
   if (swReady) return Promise.resolve();
-  if (typeof registerSW !== "function") return Promise.resolve();
-  return registerSW().then(function() { swReady = true; })
-    .catch(function(e) { showError("SW: " + e.message); throw e; });
+  if (typeof registerSW!=="function") return Promise.resolve();
+  return registerSW().then(function(){swReady=true;}).catch(function(e){showError("SW: "+e.message);throw e;});
 }
 
 // ── Geo ───────────────────────────────────────────────────
 function addGeo(url) {
   try {
-    var u = new URL(url);
-    if (u.hostname.includes("google.com") || u.hostname.includes("youtube.com")) {
-      u.searchParams.set("hl", "en"); u.searchParams.set("gl", "US");
-    }
+    var u=new URL(url);
+    if (u.hostname.includes("google.com")||u.hostname.includes("youtube.com"))
+      { u.searchParams.set("hl","en"); u.searchParams.set("gl","US"); }
     return u.toString();
-  } catch(e) { return url; }
+  } catch(e){ return url; }
 }
 
 // ── Navigate ──────────────────────────────────────────────
 function go() {
   hideError();
-  var val = document.getElementById("url-input").value.trim();
+  var val=document.getElementById("url-input").value.trim();
   if (!val) return;
-  if (typeof search === "function") val = search(val, SEARCH_ENGINE);
-  else if (!val.startsWith("http")) val = val.includes(".") ? "https://" + val : "https://www.google.com/search?q=" + encodeURIComponent(val);
-  if (val.startsWith("http://")) val = val.replace("http://", "https://");
-  val = addGeo(val);
-  if (!scramjet) { showError("Proxy not ready — reload the page"); return; }
-  ensureSW().then(ensureTransport).then(function() { openProxy(val); })
-    .catch(function(e) { showError(e.message || "Failed"); });
+  if (typeof search==="function") val=search(val,SEARCH_ENGINE);
+  else if (!val.startsWith("http")) val=val.includes(".")?"https://"+val:"https://www.google.com/search?q="+encodeURIComponent(val);
+  if (val.startsWith("http://")) val=val.replace("http://","https://");
+  val=addGeo(val);
+  if (!scramjet){showError("Proxy not ready — reload the page");return;}
+  ensureSW().then(ensureTransport).then(function(){openProxy(val);}).catch(function(e){showError(e.message||"Failed");});
 }
-
-function goTo(url) {
-  document.getElementById("url-input").value = url;
-  go();
-}
+function goTo(url){ document.getElementById("url-input").value=url; go(); }
 
 function openProxy(url) {
-  if (currentFrame) { try { currentFrame.frame.remove(); } catch(e){} currentFrame = null; }
+  if (currentFrame){try{currentFrame.frame.remove();}catch(e){} currentFrame=null;}
   startProgress(url);
   try {
-    var frame = scramjet.createFrame();
-    frame.frame.style.cssText = "width:100%;height:100%;border:none;display:block;position:absolute;inset:0;";
-    var container = document.getElementById("frame-container");
-    var old = container.querySelector("iframe");
-    if (old) old.remove();
+    var frame=scramjet.createFrame();
+    frame.frame.style.cssText="width:100%;height:100%;border:none;display:block;position:absolute;inset:0;";
+    var container=document.getElementById("frame-container");
+    var old=container.querySelector("iframe"); if (old) old.remove();
     container.appendChild(frame.frame);
-    currentFrame = frame;
-    document.getElementById("proxy-url-bar").value = url;
-    document.getElementById("proxy-view").style.display = "flex";
-    document.getElementById("home").style.display = "none";
-    frame.frame.addEventListener("load", function() { finishProgress(); });
+    currentFrame=frame;
+    document.getElementById("proxy-url-bar").value=url;
+    document.getElementById("proxy-view").style.display="flex";
+    document.getElementById("home").style.display="none";
+    frame.frame.addEventListener("load",function(){finishProgress();});
     frame.go(url);
     saveServerCookies();
-  } catch(e) { finishProgress(); showError("Failed: " + e.message); }
+  } catch(e){finishProgress();showError("Failed: "+e.message);}
 }
 
 function closeProxy() {
-  if (currentFrame) { try { currentFrame.frame.remove(); } catch(e){} currentFrame = null; }
-  document.getElementById("proxy-view").style.display = "none";
-  document.getElementById("home").style.display = "block";
-  var loader = document.getElementById("frame-loader");
-  if (loader) loader.classList.remove("hidden");
+  if (currentFrame){try{currentFrame.frame.remove();}catch(e){} currentFrame=null;}
+  document.getElementById("proxy-view").style.display="none";
+  document.getElementById("home").style.display="block";
+  var loader=document.getElementById("frame-loader"); if (loader) loader.classList.remove("hidden");
 }
 
-function showError(msg) {
-  document.getElementById("error-msg").textContent = msg || "Something went wrong.";
-  document.getElementById("error-toast").style.display = "flex";
-}
-function hideError() { document.getElementById("error-toast").style.display = "none"; }
+function showError(msg){document.getElementById("error-msg").textContent=msg||"Something went wrong.";document.getElementById("error-toast").style.display="flex";}
+function hideError(){document.getElementById("error-toast").style.display="none";}
 
-// ── Proxy bar ─────────────────────────────────────────────
-document.getElementById("proxy-back-btn").addEventListener("click", function() {
-  try { currentFrame && currentFrame.frame.contentWindow.history.back(); } catch(e){}
-});
-document.getElementById("proxy-fwd-btn").addEventListener("click", function() {
-  try { currentFrame && currentFrame.frame.contentWindow.history.forward(); } catch(e){}
-});
-document.getElementById("proxy-reload-btn").addEventListener("click", function() {
+// ── Proxy bar buttons ─────────────────────────────────────
+document.getElementById("proxy-back-btn").addEventListener("click",function(){try{currentFrame&&currentFrame.frame.contentWindow.history.back();}catch(e){}});
+document.getElementById("proxy-fwd-btn").addEventListener("click",function(){try{currentFrame&&currentFrame.frame.contentWindow.history.forward();}catch(e){}});
+document.getElementById("proxy-reload-btn").addEventListener("click",function(){
   if (!currentFrame) return;
-  var url = document.getElementById("proxy-url-bar").value;
-  startProgress(url);
-  try { currentFrame.frame.contentWindow.location.reload(); }
-  catch(e) { currentFrame.go(url); }
+  var url=document.getElementById("proxy-url-bar").value; startProgress(url);
+  try{currentFrame.frame.contentWindow.location.reload();}catch(e){currentFrame.go(url);}
 });
-document.getElementById("proxy-home-btn").addEventListener("click", closeProxy);
-document.getElementById("proxy-url-bar").addEventListener("keydown", function(e) {
-  if (e.key !== "Enter") return;
-  var val = typeof search === "function" ? search(this.value.trim(), SEARCH_ENGINE) : this.value.trim();
-  if (val.startsWith("http://")) val = val.replace("http://", "https://");
-  val = addGeo(val);
-  startProgress(val);
-  ensureTransport().then(function() {
-    if (currentFrame) { currentFrame.go(val); document.getElementById("proxy-url-bar").value = val; }
-  });
+document.getElementById("proxy-home-btn").addEventListener("click",closeProxy);
+document.getElementById("cloak-btn").addEventListener("click",tabCloak);
+
+// ── Bookmark bar toggle ───────────────────────────────────
+document.getElementById("bm-bar-toggle-btn").addEventListener("click",function(){
+  bmBarVisible=!bmBarVisible;
+  var bar=document.getElementById("bookmark-bar");
+  if (bmBarVisible) bar.classList.add("visible");
+  else bar.classList.remove("visible");
+  // Persist preference
+  try { localStorage.setItem("kairo_bm_bar", bmBarVisible?"1":"0"); } catch(e){}
+});
+
+// ── URL bar enter ─────────────────────────────────────────
+document.getElementById("proxy-url-bar").addEventListener("keydown",function(e){
+  if (e.key!=="Enter") return;
+  var val=typeof search==="function"?search(this.value.trim(),SEARCH_ENGINE):this.value.trim();
+  if (val.startsWith("http://")) val=val.replace("http://","https://");
+  val=addGeo(val); startProgress(val);
+  ensureTransport().then(function(){if(currentFrame){currentFrame.go(val);document.getElementById("proxy-url-bar").value=val;}});
 });
 
 // ── Devtools ──────────────────────────────────────────────
-document.addEventListener("keydown", function(e) {
-  if (e.ctrlKey && e.shiftKey && e.altKey && (e.key === "I" || e.key === "i")) {
+document.addEventListener("keydown",function(e){
+  if (e.ctrlKey&&e.shiftKey&&e.altKey&&(e.key==="I"||e.key==="i")){
     e.preventDefault();
-    if (currentFrame && currentFrame.frame)
-      window.open(currentFrame.frame.src, "_blank");
+    if (currentFrame&&currentFrame.frame) window.open(currentFrame.frame.src,"_blank");
   }
 });
 
-// ── Bookmark bar ──────────────────────────────────────────
-// Bookmarklets are shown as a persistent bar at the top of the proxy view.
-// Clicking one sends the code to scramjet via postMessage to the SW,
-// which injects it into the proxied page's context.
+// ── Bookmarklet injection ─────────────────────────────────
 function runBookmarklet(code) {
   if (!currentFrame) return;
-  try {
-    // Method 1: postMessage to the frame's SW-controlled window
-    currentFrame.frame.contentWindow.postMessage({
-      type: "kairo-bookmarklet",
-      code: code
-    }, "*");
-  } catch(e) {}
-
-  // Method 2: navigate the frame to a javascript: URL via scramjet's go()
-  // This works because scramjet intercepts navigation inside the frame
-  try {
-    var jsUrl = "javascript:" + encodeURIComponent("(function(){" + code + "})()");
-    currentFrame.go(jsUrl);
-  } catch(e) {}
+  try { currentFrame.go("javascript:"+encodeURIComponent("(function(){"+code+"})()")); }
+  catch(e){ console.warn("BM:",e); }
 }
 
 function renderBookmarkBar() {
-  var bar = document.getElementById("bookmark-bar");
-  if (!bookmarklets.length) {
-    bar.classList.remove("has-items");
-    bar.innerHTML = "";
-    return;
-  }
-  bar.classList.add("has-items");
-  bar.innerHTML = bookmarklets.map(function(b, i) {
-    return '<button class="bm-btn" data-i="' + i + '">' +
+  var bar=document.getElementById("bookmark-bar");
+  bar.innerHTML="";
+  if (!bookmarklets.length) return;
+  bar.innerHTML=bookmarklets.map(function(b,i){
+    return '<button class="bm-btn" data-i="'+i+'">' +
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>' +
-      b.name + '</button>';
+      b.name+'</button>';
   }).join("");
-  bar.querySelectorAll(".bm-btn").forEach(function(el) {
-    el.addEventListener("click", function() {
-      var b = bookmarklets[parseInt(this.getAttribute("data-i"))];
+  bar.querySelectorAll(".bm-btn").forEach(function(el){
+    el.addEventListener("click",function(){
+      var b=bookmarklets[parseInt(this.getAttribute("data-i"))];
       if (b) runBookmarklet(b.code);
     });
   });
@@ -448,10 +388,9 @@ function renderBookmarkBar() {
 // ── Pins ──────────────────────────────────────────────────
 function loadPins() {
   fetch("/api/pins").then(function(r){return r.json();}).then(function(data){
-    document.getElementById("pins-grid").innerHTML = (data.pins||[]).map(function(p){
-      return '<div class="pin" onclick="goTo(\'' + addGeo(p.url) + '\')" title="' + p.name + '">' +
-        '<img src="https://unpkg.com/simple-icons@latest/icons/' + p.icon + '.svg"' +
-        ' alt="' + p.name + '" loading="lazy" onerror="this.style.opacity=\'0.3\'"/></div>';
+    document.getElementById("pins-grid").innerHTML=(data.pins||[]).map(function(p){
+      return '<div class="pin" onclick="goTo(\''+addGeo(p.url)+'\')" title="'+p.name+'">' +
+        '<img src="https://unpkg.com/simple-icons@latest/icons/'+p.icon+'.svg" alt="'+p.name+'" loading="lazy" onerror="this.style.opacity=\'0.3\'"/></div>';
     }).join("");
   }).catch(function(){});
 }
@@ -459,8 +398,16 @@ function loadPins() {
 // ── Bookmarklets ──────────────────────────────────────────
 function loadBookmarklets() {
   fetch("/api/bookmarklets").then(function(r){return r.json();}).then(function(items){
-    bookmarklets = items||[];
+    bookmarklets=items||[];
     renderBookmarkBar();
+    // Restore saved visibility
+    try {
+      var saved=localStorage.getItem("kairo_bm_bar");
+      if (saved==="1"&&bookmarklets.length){
+        bmBarVisible=true;
+        document.getElementById("bookmark-bar").classList.add("visible");
+      }
+    } catch(e){}
   }).catch(function(){});
 }
 
@@ -469,71 +416,61 @@ function loadServerCookies() {
   return fetch("/api/cookies").then(function(r){return r.json();}).then(function(data){
     if (!data.cookies) return;
     data.cookies.split("||").forEach(function(entry){
-      var idx = entry.indexOf("=:="); if (idx===-1) return;
-      document.cookie = decodeURIComponent(entry.slice(0,idx)) + "=" +
-        decodeURIComponent(entry.slice(idx+3)) + "; path=/; SameSite=Lax";
+      var idx=entry.indexOf("=:="); if (idx===-1) return;
+      document.cookie=decodeURIComponent(entry.slice(0,idx))+"="+decodeURIComponent(entry.slice(idx+3))+"; path=/; SameSite=Lax";
     });
   }).catch(function(){});
 }
-
 function saveServerCookies() {
   try {
-    var encoded = document.cookie.split(";").map(function(c){return c.trim();}).filter(Boolean)
-      .map(function(c){ var i=c.indexOf("="); return i===-1?null:
-        encodeURIComponent(c.slice(0,i).trim())+"=:="+encodeURIComponent(c.slice(i+1).trim()); })
+    var encoded=document.cookie.split(";").map(function(c){return c.trim();}).filter(Boolean)
+      .map(function(c){var i=c.indexOf("=");return i===-1?null:encodeURIComponent(c.slice(0,i).trim())+"=:="+encodeURIComponent(c.slice(i+1).trim());})
       .filter(Boolean).join("||");
     if (!encoded) return;
-    fetch("/api/cookies",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({cookies:encoded}),keepalive:true});
+    fetch("/api/cookies",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({cookies:encoded}),keepalive:true});
   } catch(e){}
 }
-
-function clearSessions() {
-  document.cookie.split(";").forEach(function(c){
-    document.cookie=c.trim().split("=")[0]+"=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
-  });
+function clearSessions(){
+  document.cookie.split(";").forEach(function(c){document.cookie=c.trim().split("=")[0]+"=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";});
   fetch("/api/cookies",{method:"DELETE"}).then(function(){alert("Sessions cleared.");});
 }
-
-function logout() {
-  fetch("/api/logout",{method:"POST"}).then(function(){location.href="/login.html";});
-}
+function logout(){ fetch("/api/logout",{method:"POST"}).then(function(){location.href="/login.html";}); }
 
 // ── Inactivity ────────────────────────────────────────────
 var inactivityTimer;
-function resetTimer() {
+function resetTimer(){
   clearTimeout(inactivityTimer);
-  inactivityTimer = setTimeout(function(){
-    fetch("/api/logout",{method:"POST"}).then(function(){
-      document.getElementById("timeout-overlay").style.display="flex";
-    });
-  }, 20*60*1000);
+  inactivityTimer=setTimeout(function(){
+    fetch("/api/logout",{method:"POST"}).then(function(){document.getElementById("timeout-overlay").style.display="flex";});
+  },20*60*1000);
 }
-["mousemove","keydown","click","scroll","touchstart"].forEach(function(e){
-  document.addEventListener(e,resetTimer,{passive:true});
-});
+["mousemove","keydown","click","scroll","touchstart"].forEach(function(e){document.addEventListener(e,resetTimer,{passive:true});});
 
-// ── Wire buttons ──────────────────────────────────────────
-document.getElementById("go-btn").addEventListener("click", go);
-document.getElementById("logout-btn").addEventListener("click", logout);
-document.getElementById("reset-btn").addEventListener("click", clearSessions);
+// ── Wiring ────────────────────────────────────────────────
+document.getElementById("go-btn").addEventListener("click",go);
+document.getElementById("logout-btn").addEventListener("click",logout);
+document.getElementById("reset-btn").addEventListener("click",clearSessions);
 document.getElementById("signin-again-btn").addEventListener("click",function(){location.href="/login.html";});
 document.getElementById("url-input").addEventListener("keydown",function(e){if(e.key==="Enter")go();});
 
 // ── Boot ──────────────────────────────────────────────────
-fetch("/api/me").then(function(r){return r.json();}).then(function(me){
+// Run auth check and asset loads in parallel for fastest startup
+Promise.all([
+  fetch("/api/me").then(function(r){return r.json();}).catch(function(){return {loggedIn:false};}),
+  loadServerCookies(),
+  loadPins(),
+  loadBookmarklets()
+]).then(function(results){
+  var me=results[0];
   if (!me.loggedIn){location.href="/login.html";return;}
   if (me.displayName) document.getElementById("greeting-name").textContent="Hi, "+me.displayName+" 👋";
   if (me.isAdmin) document.getElementById("admin-link").style.display="inline-flex";
   initScramjet();
   ensureTransport().catch(function(){});
-  Promise.all([loadServerCookies(),loadPins(),loadBookmarklets()])
-    .then(function(){
-      resetTimer();
-      setInterval(saveServerCookies,15000);
-      window.addEventListener("beforeunload",saveServerCookies);
-      showUI();
-    }).catch(function(){showUI();});
+  resetTimer();
+  setInterval(saveServerCookies,15000);
+  window.addEventListener("beforeunload",saveServerCookies);
+  showUI();
 }).catch(function(){location.href="/login.html";});
 </script>
 </body>
