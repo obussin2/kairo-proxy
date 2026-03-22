@@ -9,6 +9,9 @@
   <!-- Load scramjet + baremux before anything else -->
   <script src="/scram/scramjet.all.js"></script>
   <script src="/baremux/index.js"></script>
+  <!-- UV for Blooket -->
+  <script src="/uv/uv.bundle.js"></script>
+  <script src="/uv/uv.config.js"></script>
   <style>
     .pin img { width:18px;height:18px;filter:brightness(0) invert(1);opacity:0.82;transition:opacity 0.15s; }
     .pin:hover img { opacity:1; }
@@ -134,6 +137,36 @@
       </div>
     </section>
     <section>
+      <!-- browser.lol shortcut for Blooket -->
+      <div style="margin-bottom:12px;">
+        <div class="section-label">Blooket</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="blooket-biab-btn" style="
+            display:inline-flex;align-items:center;gap:8px;
+            background:#0e1014;border:1px solid #1c2028;border-radius:10px;
+            color:#8a94a0;font-size:0.82rem;font-family:'DM Sans',sans-serif;
+            padding:9px 16px;cursor:pointer;transition:all 0.15s;
+          " onmouseover="this.style.borderColor='#7b6ef6';this.style.color='#e8ecf0';this.style.boxShadow='0 0 0 3px rgba(123,110,246,0.15)'"
+             onmouseout="this.style.borderColor='#1c2028';this.style.color='#8a94a0';this.style.boxShadow='none'">
+            <img src="https://unpkg.com/simple-icons@latest/icons/googlechrome.svg"
+              style="width:14px;height:14px;filter:brightness(0) invert(1);opacity:0.7;" alt=""/>
+            Open Blooket via Virtual Browser
+          </button>
+          <button id="blooket-biab-fullscreen-btn" style="
+            display:inline-flex;align-items:center;gap:6px;
+            background:none;border:1px solid #1c2028;border-radius:10px;
+            color:#5a6370;font-size:0.78rem;font-family:'DM Sans',sans-serif;
+            padding:9px 12px;cursor:pointer;transition:all 0.15s;
+          " title="Open fullscreen"
+             onmouseover="this.style.borderColor='#7b6ef6';this.style.color='#e8ecf0'"
+             onmouseout="this.style.borderColor='#1c2028';this.style.color='#5a6370'">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            Fullscreen
+          </button>
+        </div>
+        <div style="font-size:0.72rem;color:#3a4050;margin-top:6px;">Opens browser.lol — a virtual browser that bypasses Blooket's connection block</div>
+      </div>
+
       <div class="section-label">Quick Access</div>
       <div class="pins-grid" id="pins-grid"></div>
     </section>
@@ -508,6 +541,19 @@ document.getElementById("logout-btn").addEventListener("click",logout);
 document.getElementById("reset-btn").addEventListener("click",clearSessions);
 document.getElementById("signin-again-btn").addEventListener("click",function(){location.href="/login.html";});
 document.getElementById("url-input").addEventListener("keydown",function(e){if(e.key==="Enter")go();});
+
+// ── Browser.lol (Blooket virtual browser) ────────────────
+document.getElementById("blooket-biab-btn").addEventListener("click", function() {
+  window.open("https://browser.lol", "_blank");
+});
+document.getElementById("blooket-biab-fullscreen-btn").addEventListener("click", function() {
+  var w = window.open("https://browser.lol", "_blank");
+  if (w) {
+    w.addEventListener("load", function() {
+      try { w.document.documentElement.requestFullscreen && w.document.documentElement.requestFullscreen(); } catch(e){}
+    });
+  }
+});
 
 // ── Settings & Site Cloak ─────────────────────────────────
 var CLOAK_PRESETS = [
