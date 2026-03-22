@@ -147,8 +147,8 @@
   <footer class="footer-bar"><span>Kairo &mdash; Private Browsing</span></footer>
 </div>
 
-<!-- Proxy view -->
-<div id="proxy-view" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;background:#07080a;">
+<!-- Proxy view — nav bar + bookmark bar only, frame is appended to body separately -->
+<div id="proxy-view" style="display:none;position:fixed;top:0;left:0;right:0;z-index:495;flex-direction:column;">
 
   <!-- URL / nav bar -->
   <div class="proxy-bar" style="position:relative;gap:6px;">
@@ -184,15 +184,14 @@
   <!-- Bookmark bar (hidden by default, toggle with button) -->
   <div id="bookmark-bar"></div>
 
-  <!-- Page frame -->
-  <div id="frame-container" style="flex:1;overflow:hidden;position:relative;">
-    <div id="frame-loader">
-      <div class="frame-loader-bar"><div class="frame-loader-fill"></div></div>
-      <div class="frame-loader-text">Loading…</div>
-      <div class="frame-loader-url" id="frame-loader-url"></div>
-    </div>
-    <iframe id="sj-frame" style="width:100%;height:100%;border:none;display:block;position:absolute;inset:0;" allow="fullscreen"></iframe>
-  </div>
+
+</div>
+
+<!-- Floating loading overlay (shown while proxy page loads) -->
+<div id="frame-loader" style="display:none;position:fixed;inset:0;background:#07080a;z-index:492;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+  <div class="frame-loader-bar"><div class="frame-loader-fill"></div></div>
+  <div class="frame-loader-text">Loading…</div>
+  <div class="frame-loader-url" id="frame-loader-url"></div>
 </div>
 
 <!-- Inactivity overlay -->
@@ -311,35 +310,61 @@ function go() {
   else if (!val.startsWith("http")) val=val.includes(".")?"https://"+val:"https://www.google.com/search?q="+encodeURIComponent(val);
   if (val.startsWith("http://")) val=val.replace("http://","https://");
   val=addGeo(val);
+  if (!scramjet) initScramjet();
   if (!scramjet){showError("Proxy not ready — reload the page");return;}
   ensureSW().then(ensureTransport).then(function(){openProxy(val);}).catch(function(e){showError(e.message||"Failed");});
 }
 function goTo(url){ document.getElementById("url-input").value=url; go(); }
 
 function openProxy(url) {
-  if (currentFrame){try{currentFrame.frame.remove();}catch(e){} currentFrame=null;}
+  // Remove old frame if exists
+  if (currentFrame) {
+    try { currentFrame.frame.remove(); } catch(e) {}
+    currentFrame = null;
+  }
   startProgress(url);
   try {
-    var frame=scramjet.createFrame();
-    frame.frame.style.cssText="width:100%;height:100%;border:none;display:block;position:absolute;inset:0;";
-    var container=document.getElementById("frame-container");
-    var old=container.querySelector("iframe"); if (old) old.remove();
-    container.appendChild(frame.frame);
-    currentFrame=frame;
-    document.getElementById("proxy-url-bar").value=url;
-    document.getElementById("proxy-view").style.display="flex";
-    document.getElementById("home").style.display="none";
-    frame.frame.addEventListener("load",function(){finishProgress();});
+    // Match official scramjet-app exactly:
+    // createFrame() then append to body, set fixed positioning to fill screen
+    var frame = scramjet.createFrame();
+    frame.frame.id = "sj-frame";
+    frame.frame.style.cssText = [
+      "position:fixed",
+      "inset:0",
+      "width:100%",
+      "height:100%",
+      "border:none",
+      "z-index:490",
+      "background:#fff",
+      "display:block"
+    ].join(";");
+    document.body.appendChild(frame.frame);
+    currentFrame = frame;
+
+    // Show proxy UI overlay on top
+    document.getElementById("proxy-view").style.display = "flex";
+    document.getElementById("home").style.display = "none";
+    document.getElementById("proxy-url-bar").value = url;
+
+    frame.frame.addEventListener("load", function() { finishProgress(); });
     frame.go(url);
     saveServerCookies();
-  } catch(e){finishProgress();showError("Failed: "+e.message);}
+  } catch(e) {
+    finishProgress();
+    showError("Failed: " + e.message);
+    console.error("[Kairo] openProxy:", e);
+  }
 }
 
 function closeProxy() {
-  if (currentFrame){try{currentFrame.frame.remove();}catch(e){} currentFrame=null;}
-  document.getElementById("proxy-view").style.display="none";
-  document.getElementById("home").style.display="block";
-  var loader=document.getElementById("frame-loader"); if (loader) loader.classList.remove("hidden");
+  if (currentFrame) {
+    try { currentFrame.frame.remove(); } catch(e) {}
+    currentFrame = null;
+  }
+  document.getElementById("proxy-view").style.display = "none";
+  document.getElementById("home").style.display = "block";
+  var loader = document.getElementById("frame-loader");
+  if (loader) loader.classList.remove("hidden");
 }
 
 function showError(msg){document.getElementById("error-msg").textContent=msg||"Something went wrong.";document.getElementById("error-toast").style.display="flex";}
@@ -488,6 +513,7 @@ Promise.all([
   if (me.displayName) document.getElementById("greeting-name").textContent="Hi, "+me.displayName+" 👋";
   if (me.isAdmin) document.getElementById("admin-link").style.display="inline-flex";
   initScramjet();
+  ensureSW().catch(function(){});
   ensureTransport().catch(function(){});
   resetTimer();
   setInterval(saveServerCookies,15000);
