@@ -243,6 +243,11 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>
     </button>
 
+    <!-- Fullscreen -->
+    <button class="proxy-back" id="proxy-fullscreen-btn" title="Fullscreen">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+    </button>
+
     <!-- Home -->
     <button class="proxy-back" id="proxy-home-btn" title="Home">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -251,7 +256,6 @@
 
   <!-- Bookmark bar (hidden by default, toggle with button) -->
   <div id="bookmark-bar"></div>
-
 
 </div>
 
@@ -544,13 +548,31 @@ document.getElementById("url-input").addEventListener("keydown",function(e){if(e
 
 // ── Browser.lol (Blooket virtual browser) ────────────────
 document.getElementById("blooket-biab-btn").addEventListener("click", function() {
-  window.open("https://browser.lol", "_blank");
+  // Load browser.lol inside the Kairo proxy frame
+  goTo("https://browser.lol");
 });
 document.getElementById("blooket-biab-fullscreen-btn").addEventListener("click", function() {
-  var w = window.open("https://browser.lol", "_blank");
-  if (w) {
-    w.addEventListener("load", function() {
-      try { w.document.documentElement.requestFullscreen && w.document.documentElement.requestFullscreen(); } catch(e){}
+  // Load browser.lol inside proxy then fullscreen
+  goTo("https://browser.lol");
+  // Fullscreen after frame loads
+  setTimeout(function() {
+    var container = document.getElementById("proxy-view");
+    if (container && container.requestFullscreen) {
+      container.requestFullscreen().catch(function(){});
+    }
+  }, 2000);
+});
+
+// Fullscreen proxy button
+document.getElementById("proxy-fullscreen-btn").addEventListener("click", function() {
+  var container = document.getElementById("proxy-view");
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(function(){});
+  } else if (container) {
+    container.requestFullscreen().catch(function(){
+      // Fallback: try frame itself
+      var frame = document.getElementById("sj-frame");
+      if (frame && frame.requestFullscreen) frame.requestFullscreen().catch(function(){});
     });
   }
 });
