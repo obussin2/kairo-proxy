@@ -6,12 +6,8 @@
   <title>Kairo</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237b6ef6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='white'%3EK%3C/text%3E%3C/svg%3E"/>
   <link rel="stylesheet" href="/style.css"/>
-  <!-- Load scramjet + baremux before anything else -->
   <script src="/scram/scramjet.all.js"></script>
   <script src="/baremux/index.js"></script>
-  <!-- UV for Blooket -->
-  <script src="/uv/uv.bundle.js"></script>
-  <script src="/uv/uv.config.js"></script>
   <style>
     .pin img { width:18px;height:18px;filter:brightness(0) invert(1);opacity:0.82;transition:opacity 0.15s; }
     .pin:hover img { opacity:1; }
@@ -21,14 +17,10 @@
       padding:4px 10px;outline:none;min-width:0;transition:border-color 0.15s,color 0.15s;
     }
     .proxy-url-input:focus { border-color:#7b6ef6;color:#e8ecf0; }
-
-    /* ── Bookmark bar ── */
     #bookmark-bar {
-      align-items:center;gap:2px;padding:0 8px;
-      height:30px;background:#0b0d10;
-      border-bottom:1px solid #1c2028;
-      overflow-x:auto;flex-shrink:0;
-      scrollbar-width:none;display:none;
+      align-items:center;gap:2px;padding:0 8px;height:30px;
+      background:#0b0d10;border-bottom:1px solid #1c2028;
+      overflow-x:auto;flex-shrink:0;scrollbar-width:none;display:none;
     }
     #bookmark-bar::-webkit-scrollbar { display:none; }
     #bookmark-bar.visible { display:flex; }
@@ -36,14 +28,10 @@
       display:inline-flex;align-items:center;gap:4px;padding:2px 9px;
       border-radius:5px;border:none;background:transparent;
       color:#8a94a0;font-size:0.74rem;font-family:'DM Sans',sans-serif;
-      cursor:pointer;white-space:nowrap;flex-shrink:0;
-      transition:background 0.12s,color 0.12s;
+      cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background 0.12s,color 0.12s;
     }
     .bm-btn:hover { background:rgba(123,110,246,0.12);color:#e8ecf0; }
     .bm-btn svg { width:10px;height:10px;opacity:0.5;flex-shrink:0; }
-    .bm-btn:hover svg { opacity:1; }
-
-    /* ── Frame loading overlay ── */
     #frame-loader {
       position:absolute;inset:0;background:#07080a;
       display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -57,26 +45,22 @@
     }
     @keyframes fbar { 0%{width:0%;margin-left:0%} 50%{width:55%;margin-left:22%} 100%{width:0%;margin-left:100%} }
     .frame-loader-text { font-size:0.75rem;color:#5a6370;font-family:'DM Sans',sans-serif; }
-    .frame-loader-url { font-size:0.68rem;color:#353d4a;font-family:'DM Sans',sans-serif;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-
-    /* ── Top progress bar ── */
     #top-progress {
       position:absolute;top:0;left:0;height:2px;
       background:linear-gradient(90deg,#7b6ef6,#9d92fa);
       width:0%;transition:width 0.25s ease;z-index:20;border-radius:0 2px 2px 0;
     }
   </style>
-
   <script>
-    var _uiShown = false;
-    function showUI() {
-      if (_uiShown) return; _uiShown = true;
-      var l=document.getElementById("loader"), h=document.getElementById("home");
-      if (l) l.style.display="none"; if (h) h.style.display="block";
+    var _uiShown=false;
+    function showUI(){
+      if(_uiShown)return;_uiShown=true;
+      var l=document.getElementById("loader"),h=document.getElementById("home");
+      if(l)l.style.display="none";if(h)h.style.display="block";
     }
-    setTimeout(showUI, 5000);
-    window.addEventListener("error", function(e){ showUI(); });
-    window.addEventListener("unhandledrejection", function(e){ showUI(); });
+    setTimeout(showUI,5000);
+    window.addEventListener("error",function(){showUI();});
+    window.addEventListener("unhandledrejection",function(){showUI();});
   </script>
 </head>
 <body>
@@ -95,14 +79,13 @@
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         Admin
       </a>
-
-      <button class="nav-btn" id="reset-btn">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
-        Reset
-      </button>
       <button class="nav-btn" id="settings-btn">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Settings
+      </button>
+      <button class="nav-btn" id="reset-btn">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
+        Reset
       </button>
       <button class="nav-btn" id="logout-btn">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -127,8 +110,6 @@
           </svg>
         </button>
       </div>
-
-
       <div class="error-toast" id="error-toast" style="display:none;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -144,99 +125,72 @@
   <footer class="footer-bar"><span>Kairo &mdash; Private Browsing</span></footer>
 </div>
 
-<!-- Settings modal -->
-<div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,8,10,0.85);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
-  <div style="background:#0e1014;border:1px solid #1c2028;border-radius:18px;padding:28px;width:100%;max-width:400px;margin:20px;box-shadow:0 24px 64px rgba(0,0,0,0.5);animation:cardIn 0.25s cubic-bezier(0.16,1,0.3,1) both;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
-      <div style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:#e8ecf0;">Settings</div>
-      <button id="settings-close" style="background:none;border:none;color:#5a6370;cursor:pointer;padding:4px;border-radius:6px;transition:color 0.15s;" onmouseover="this.style.color='#e8ecf0'" onmouseout="this.style.color='#5a6370'">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-
-    <!-- Site Cloak -->
-    <div style="margin-bottom:20px;">
-      <div style="font-size:0.72rem;font-weight:600;color:#5a6370;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;">Site Cloak</div>
-      <div style="font-size:0.8rem;color:#5a6370;margin-bottom:12px;">Changes the tab title and favicon to disguise this site.</div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <div>
-          <label style="font-size:0.72rem;color:#8a94a0;display:block;margin-bottom:4px;">Tab Title</label>
-          <input type="text" id="cloak-title" placeholder="e.g. Google Classroom" autocomplete="off"
-            style="width:100%;background:#13161b;border:1px solid #1c2028;border-radius:8px;color:#e8ecf0;font-size:0.88rem;font-family:'DM Sans',sans-serif;padding:8px 12px;outline:none;transition:border-color 0.15s;"
-            onfocus="this.style.borderColor='#7b6ef6'" onblur="this.style.borderColor='#1c2028'"/>
-        </div>
-        <div>
-          <label style="font-size:0.72rem;color:#8a94a0;display:block;margin-bottom:4px;">Favicon URL</label>
-          <input type="text" id="cloak-favicon" placeholder="e.g. https://classroom.google.com/favicon.ico" autocomplete="off"
-            style="width:100%;background:#13161b;border:1px solid #1c2028;border-radius:8px;color:#e8ecf0;font-size:0.88rem;font-family:'DM Sans',sans-serif;padding:8px 12px;outline:none;transition:border-color 0.15s;"
-            onfocus="this.style.borderColor='#7b6ef6'" onblur="this.style.borderColor='#1c2028'"/>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:4px;">
-          <button id="cloak-apply-btn" style="flex:1;padding:8px;background:#7b6ef6;border:none;border-radius:8px;color:#fff;font-size:0.83rem;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#9d92fa'" onmouseout="this.style.background='#7b6ef6'">Apply Cloak</button>
-          <button id="cloak-reset-btn" style="flex:1;padding:8px;background:none;border:1px solid #1c2028;border-radius:8px;color:#5a6370;font-size:0.83rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#5a6370';this.style.color='#e8ecf0'" onmouseout="this.style.borderColor='#1c2028';this.style.color='#5a6370'">Remove Cloak</button>
-        </div>
-        <!-- Quick presets -->
-        <div style="margin-top:6px;">
-          <div style="font-size:0.68rem;color:#3a4050;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.1em;">Quick Presets</div>
-          <div style="display:flex;flex-wrap:wrap;gap:5px;" id="cloak-presets"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Proxy view — nav bar + bookmark bar only, frame is appended to body separately -->
-<div id="proxy-view" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;background:#07080a;">
-
-  <!-- Invisible trigger zone at top — hover to show bar -->
-  <div id="bar-trigger"></div>
-
-  <!-- URL / nav bar -->
-  <div class="proxy-bar" style="position:relative;gap:6px;">
+<!-- Proxy view — bar sits on top, frame is fixed behind it -->
+<div id="proxy-view" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;pointer-events:none;">
+  <div class="proxy-bar" style="position:relative;gap:6px;pointer-events:all;">
     <div id="top-progress"></div>
-
-    <!-- Back / Fwd -->
     <button class="proxy-back" id="proxy-back-btn" title="Back">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <button class="proxy-back" id="proxy-fwd-btn" title="Forward">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
-
-    <!-- URL bar -->
     <input id="proxy-url-bar" class="proxy-url-input" placeholder="Enter URL…" autocomplete="off" spellcheck="false"/>
-
-    <!-- Reload -->
     <button class="proxy-back" id="proxy-reload-btn" title="Reload">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
     </button>
-
-    <!-- Toggle bookmark bar -->
     <button class="proxy-back" id="bm-bar-toggle-btn" title="Toggle bookmarks">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>
     </button>
-
-    <!-- Fullscreen -->
     <button class="proxy-back" id="proxy-fullscreen-btn" title="Fullscreen">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
     </button>
-
-    <!-- Home -->
     <button class="proxy-back" id="proxy-home-btn" title="Home">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </button>
   </div>
-
-  <!-- Bookmark bar (hidden by default, toggle with button) -->
-  <div id="bookmark-bar"></div>
-
+  <div id="bookmark-bar" style="pointer-events:all;"></div>
 </div>
 
-<!-- Floating loading overlay (shown while proxy page loads) -->
+<!-- Frame loader overlay -->
 <div id="frame-loader" style="display:none;position:fixed;inset:0;background:#07080a;z-index:492;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
   <div class="frame-loader-bar"><div class="frame-loader-fill"></div></div>
   <div class="frame-loader-text">Loading…</div>
-  <div class="frame-loader-url" id="frame-loader-url"></div>
+  <div style="font-size:0.68rem;color:#353d4a;font-family:'DM Sans',sans-serif;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="frame-loader-url"></div>
+</div>
+
+<!-- Settings modal -->
+<div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,8,10,0.85);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
+  <div style="background:#0e1014;border:1px solid #1c2028;border-radius:18px;padding:28px;width:100%;max-width:400px;margin:20px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <div style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:#e8ecf0;">Settings</div>
+      <button id="settings-close" style="background:none;border:none;color:#5a6370;cursor:pointer;padding:4px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="font-size:0.72rem;font-weight:600;color:#5a6370;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;">Site Cloak</div>
+    <div style="font-size:0.8rem;color:#5a6370;margin-bottom:12px;">Changes the tab title and favicon to disguise this site.</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div>
+        <label style="font-size:0.72rem;color:#8a94a0;display:block;margin-bottom:4px;">Tab Title</label>
+        <input type="text" id="cloak-title" placeholder="e.g. Google Classroom" autocomplete="off"
+          style="width:100%;background:#13161b;border:1px solid #1c2028;border-radius:8px;color:#e8ecf0;font-size:0.88rem;font-family:'DM Sans',sans-serif;padding:8px 12px;outline:none;box-sizing:border-box;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem;color:#8a94a0;display:block;margin-bottom:4px;">Favicon URL</label>
+        <input type="text" id="cloak-favicon" placeholder="e.g. https://classroom.google.com/favicon.ico" autocomplete="off"
+          style="width:100%;background:#13161b;border:1px solid #1c2028;border-radius:8px;color:#e8ecf0;font-size:0.88rem;font-family:'DM Sans',sans-serif;padding:8px 12px;outline:none;box-sizing:border-box;"/>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button id="cloak-apply-btn" style="flex:1;padding:8px;background:#7b6ef6;border:none;border-radius:8px;color:#fff;font-size:0.83rem;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">Apply Cloak</button>
+        <button id="cloak-reset-btn" style="flex:1;padding:8px;background:none;border:1px solid #1c2028;border-radius:8px;color:#5a6370;font-size:0.83rem;font-family:'DM Sans',sans-serif;cursor:pointer;">Remove Cloak</button>
+      </div>
+      <div style="margin-top:6px;">
+        <div style="font-size:0.68rem;color:#3a4050;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.1em;">Quick Presets</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;" id="cloak-presets"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Inactivity overlay -->
@@ -248,127 +202,104 @@
 
 <script src="/register-sw.js"></script>
 <script src="/search.js"></script>
-
 <script>
-// ── Constants ─────────────────────────────────────────────
-var SEARCH_ENGINE = "https://www.google.com/search?q=%s&hl=en&gl=US";
-var WISP_URL = (location.protocol==="https:"?"wss":"ws")+"://"+location.host+"/wisp/";
+var SEARCH_ENGINE="https://www.google.com/search?q=%s&hl=en&gl=US";
+var WISP_URL=(location.protocol==="https:"?"wss":"ws")+"://"+location.host+"/wisp/";
+var scramjet=null,connection=null,currentFrame=null,swReady=false,bookmarklets=[],progressTimer=null,bmBarVisible=false;
 
-// ── State ─────────────────────────────────────────────────
-var scramjet = null, connection = null, currentFrame = null;
-var swReady = false, bookmarklets = [], progressTimer = null;
-var bmBarVisible = false;
-
-
+function showUI(){
+  if(window._uiShown)return;window._uiShown=true;
+  var l=document.getElementById("loader"),h=document.getElementById("home");
+  if(l)l.style.display="none";if(h)h.style.display="block";
+}
 
 // ── Progress ──────────────────────────────────────────────
-function startProgress(url) {
-  var bar=document.getElementById("top-progress");
-  var loader=document.getElementById("frame-loader");
-  var lu=document.getElementById("frame-loader-url");
-  if (lu) lu.textContent=url||"";
-  if (loader) loader.classList.remove("hidden");
-  clearInterval(progressTimer);
-  var pct=0; if (bar) bar.style.width="0%";
-  progressTimer=setInterval(function(){ pct=pct+(85-pct)*0.07; if(bar) bar.style.width=pct+"%"; },180);
+function startProgress(url){
+  var bar=document.getElementById("top-progress"),loader=document.getElementById("frame-loader"),lu=document.getElementById("frame-loader-url");
+  if(lu)lu.textContent=url||"";
+  if(loader){loader.style.display="flex";loader.classList.remove("hidden");}
+  clearInterval(progressTimer);var pct=0;if(bar)bar.style.width="0%";
+  progressTimer=setInterval(function(){pct=pct+(85-pct)*0.07;if(bar)bar.style.width=pct+"%";},180);
 }
-function finishProgress() {
-  var bar=document.getElementById("top-progress"), loader=document.getElementById("frame-loader");
+function finishProgress(){
+  var bar=document.getElementById("top-progress"),loader=document.getElementById("frame-loader");
   clearInterval(progressTimer);
-  if (bar){bar.style.width="100%"; setTimeout(function(){bar.style.width="0%";},350);}
-  if (loader) setTimeout(function(){loader.classList.add("hidden");},250);
+  if(bar){bar.style.width="100%";setTimeout(function(){bar.style.width="0%";},350);}
+  if(loader)setTimeout(function(){loader.classList.add("hidden");setTimeout(function(){loader.style.display="none";},300);},250);
 }
 
 // ── Scramjet ──────────────────────────────────────────────
-function initScramjet() {
-  try {
-    if (typeof $scramjetLoadController!=="function") return;
+function initScramjet(){
+  try{
+    if(typeof $scramjetLoadController!=="function")return;
     var ctrl=$scramjetLoadController();
-    scramjet=new ctrl.ScramjetController({
-      files:{wasm:"/scram/scramjet.wasm.wasm",all:"/scram/scramjet.all.js",sync:"/scram/scramjet.sync.js"}
-    });
+    scramjet=new ctrl.ScramjetController({files:{wasm:"/scram/scramjet.wasm.wasm",all:"/scram/scramjet.all.js",sync:"/scram/scramjet.sync.js"}});
     scramjet.init();
-  } catch(e){ console.error("[Kairo] SJ:",e); }
+  }catch(e){console.error("[Kairo] SJ:",e);}
 }
 
 // ── BareMux ───────────────────────────────────────────────
-function getConn() {
-  if (!connection) try { connection=new BareMux.BareMuxConnection("/baremux/worker.js"); } catch(e){ return null; }
+function getConn(){
+  if(!connection)try{connection=new BareMux.BareMuxConnection("/baremux/worker.js");}catch(e){return null;}
   return connection;
 }
-function ensureTransport() {
-  var c=getConn(); if (!c) return Promise.resolve();
-  return c.getTransport().then(function(t){
-    if (t!=="/libcurl/index.mjs") return c.setTransport("/libcurl/index.mjs",[{websocket:WISP_URL}]);
-  }).catch(function(){});
+function ensureTransport(){
+  var c=getConn();if(!c)return Promise.resolve();
+  return c.getTransport().then(function(t){if(t!=="/libcurl/index.mjs")return c.setTransport("/libcurl/index.mjs",[{websocket:WISP_URL}]);}).catch(function(){});
 }
 
 // ── SW ────────────────────────────────────────────────────
-function ensureSW() {
-  if (swReady) return Promise.resolve();
-  if (typeof registerSW!=="function") return Promise.resolve();
+function ensureSW(){
+  if(swReady)return Promise.resolve();
+  if(typeof registerSW!=="function")return Promise.resolve();
   return registerSW().then(function(){swReady=true;}).catch(function(e){showError("SW: "+e.message);throw e;});
 }
 
 // ── Geo ───────────────────────────────────────────────────
-function addGeo(url) {
-  try {
-    var u=new URL(url);
-    if (u.hostname.includes("google.com")||u.hostname.includes("youtube.com"))
-      { u.searchParams.set("hl","en"); u.searchParams.set("gl","US"); }
-    return u.toString();
-  } catch(e){ return url; }
+function addGeo(url){
+  try{var u=new URL(url);if(u.hostname.includes("google.com")||u.hostname.includes("youtube.com")){u.searchParams.set("hl","en");u.searchParams.set("gl","US");}return u.toString();}catch(e){return url;}
 }
 
 // ── Navigate ──────────────────────────────────────────────
-function go() {
+function go(){
   hideError();
-  var val=document.getElementById("url-input").value.trim();
-  if (!val) return;
-  if (typeof search==="function") val=search(val,SEARCH_ENGINE);
-  else if (!val.startsWith("http")) val=val.includes(".")?"https://"+val:"https://www.google.com/search?q="+encodeURIComponent(val);
-  if (val.startsWith("http://")) val=val.replace("http://","https://");
+  var val=document.getElementById("url-input").value.trim();if(!val)return;
+  if(typeof search==="function")val=search(val,SEARCH_ENGINE);
+  else if(!val.startsWith("http"))val=val.includes(".")?"https://"+val:"https://www.google.com/search?q="+encodeURIComponent(val);
+  if(val.startsWith("http://"))val=val.replace("http://","https://");
   val=addGeo(val);
-  if (!scramjet) initScramjet();
-  if (!scramjet){showError("Proxy not ready — reload the page");return;}
+  if(!scramjet)initScramjet();
+  if(!scramjet){showError("Proxy not ready — reload the page");return;}
   ensureSW().then(ensureTransport).then(function(){openProxy(val);}).catch(function(e){showError(e.message||"Failed");});
 }
-function goTo(url){ document.getElementById("url-input").value=url; go(); }
+function goTo(url){document.getElementById("url-input").value=url;go();}
 
-function openProxy(url) {
-  if (currentFrame) {
-    try { currentFrame.frame.remove(); } catch(e) {}
-    currentFrame = null;
-  }
+function openProxy(url){
+  if(currentFrame){try{currentFrame.frame.remove();}catch(e){}currentFrame=null;}
   startProgress(url);
-  try {
-    var frame = scramjet.createFrame();
-    frame.frame.id = "sj-frame";
-    frame.frame.style.cssText = "position:fixed;inset:0;width:100%;height:100%;border:none;z-index:490;background:#fff;display:block;";
+  try{
+    var frame=scramjet.createFrame();
+    frame.frame.id="sj-frame";
+    // Frame fills full viewport behind the bar overlay
+    frame.frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:none;z-index:490;background:#fff;display:block;";
     document.body.appendChild(frame.frame);
-    currentFrame = frame;
-    document.getElementById("proxy-view").style.display = "flex";
-    document.getElementById("home").style.display = "none";
-    document.getElementById("proxy-url-bar").value = url;
-    resetBarHideTimer();
-    frame.frame.addEventListener("load", function() { finishProgress(); });
+    currentFrame=frame;
+    // Show bar overlay (pointer-events:none so clicks go through to frame)
+    document.getElementById("proxy-view").style.display="flex";
+    document.getElementById("home").style.display="none";
+    document.getElementById("proxy-url-bar").value=url;
+    frame.frame.addEventListener("load",function(){finishProgress();});
     frame.go(url);
     saveServerCookies();
-  } catch(e) {
-    finishProgress();
-    showError("Failed: " + e.message);
-  }
+  }catch(e){finishProgress();showError("Failed: "+e.message);}
 }
 
-function closeProxy() {
-  if (currentFrame) {
-    try { currentFrame.frame.remove(); } catch(e) {}
-    currentFrame = null;
-  }
-  document.getElementById("proxy-view").style.display = "none";
-  document.getElementById("home").style.display = "block";
-  var loader = document.getElementById("frame-loader");
-  if (loader) loader.classList.remove("hidden");
+function closeProxy(){
+  if(currentFrame){try{currentFrame.frame.remove();}catch(e){}currentFrame=null;}
+  document.getElementById("proxy-view").style.display="none";
+  document.getElementById("home").style.display="block";
+  var loader=document.getElementById("frame-loader");
+  if(loader){loader.classList.remove("hidden");loader.style.display="none";}
 }
 
 function showError(msg){document.getElementById("error-msg").textContent=msg||"Something went wrong.";document.getElementById("error-toast").style.display="flex";}
@@ -378,301 +309,27 @@ function hideError(){document.getElementById("error-toast").style.display="none"
 document.getElementById("proxy-back-btn").addEventListener("click",function(){try{currentFrame&&currentFrame.frame.contentWindow.history.back();}catch(e){}});
 document.getElementById("proxy-fwd-btn").addEventListener("click",function(){try{currentFrame&&currentFrame.frame.contentWindow.history.forward();}catch(e){}});
 document.getElementById("proxy-reload-btn").addEventListener("click",function(){
-  if (!currentFrame) return;
-  var url=document.getElementById("proxy-url-bar").value; startProgress(url);
+  if(!currentFrame)return;var url=document.getElementById("proxy-url-bar").value;startProgress(url);
   try{currentFrame.frame.contentWindow.location.reload();}catch(e){currentFrame.go(url);}
 });
 document.getElementById("proxy-home-btn").addEventListener("click",closeProxy);
+document.getElementById("proxy-url-bar").addEventListener("keydown",function(e){
+  if(e.key!=="Enter")return;
+  var val=typeof search==="function"?search(this.value.trim(),SEARCH_ENGINE):this.value.trim();
+  if(val.startsWith("http://"))val=val.replace("http://","https://");val=addGeo(val);
+  startProgress(val);ensureTransport().then(function(){if(currentFrame){currentFrame.go(val);document.getElementById("proxy-url-bar").value=val;}});
+});
 
+// ── Fullscreen ────────────────────────────────────────────
+document.getElementById("proxy-fullscreen-btn").addEventListener("click",function(){
+  if(document.fullscreenElement){
+    document.exitFullscreen().catch(function(){});
+  }else{
+    var el=document.documentElement;
+    (el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen).call(el).catch(function(){});
+  }
+});
 
 // ── Bookmark bar toggle ───────────────────────────────────
 document.getElementById("bm-bar-toggle-btn").addEventListener("click",function(){
-  bmBarVisible=!bmBarVisible;
-  var bar=document.getElementById("bookmark-bar");
-  if (bmBarVisible) bar.classList.add("visible");
-  else bar.classList.remove("visible");
-  // Persist preference
-  try { localStorage.setItem("kairo_bm_bar", bmBarVisible?"1":"0"); } catch(e){}
-});
-
-// ── URL bar enter ─────────────────────────────────────────
-document.getElementById("proxy-url-bar").addEventListener("keydown",function(e){
-  if (e.key!=="Enter") return;
-  var val=typeof search==="function"?search(this.value.trim(),SEARCH_ENGINE):this.value.trim();
-  if (val.startsWith("http://")) val=val.replace("http://","https://");
-  val=addGeo(val); startProgress(val);
-  ensureTransport().then(function(){if(currentFrame){currentFrame.go(val);document.getElementById("proxy-url-bar").value=val;}});
-});
-
-// ── Devtools ──────────────────────────────────────────────
-document.addEventListener("keydown",function(e){
-  if (e.ctrlKey&&e.shiftKey&&e.altKey&&(e.key==="I"||e.key==="i")){
-    e.preventDefault();
-    if (currentFrame&&currentFrame.frame) window.open(currentFrame.frame.src,"_blank");
-  }
-});
-
-// ── Bookmarklet injection ─────────────────────────────────
-function runBookmarklet(code) {
-  if (!currentFrame) return;
-  try { currentFrame.go("javascript:"+encodeURIComponent("(function(){"+code+"})()")); }
-  catch(e){ console.warn("BM:",e); }
-}
-
-function renderBookmarkBar() {
-  var bar=document.getElementById("bookmark-bar");
-  bar.innerHTML="";
-  if (!bookmarklets.length) return;
-  bar.innerHTML=bookmarklets.map(function(b,i){
-    return '<button class="bm-btn" data-i="'+i+'">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>' +
-      b.name+'</button>';
-  }).join("");
-  bar.querySelectorAll(".bm-btn").forEach(function(el){
-    el.addEventListener("click",function(){
-      var b=bookmarklets[parseInt(this.getAttribute("data-i"))];
-      if (b) runBookmarklet(b.code);
-    });
-  });
-}
-
-// ── Pins ──────────────────────────────────────────────────
-function loadPins() {
-  fetch("/api/pins").then(function(r){return r.json();}).then(function(data){
-    document.getElementById("pins-grid").innerHTML=(data.pins||[]).map(function(p){
-      return '<div class="pin" onclick="goTo(\''+addGeo(p.url)+'\')" title="'+p.name+'">' +
-        '<img src="https://unpkg.com/simple-icons@latest/icons/'+p.icon+'.svg" alt="'+p.name+'" loading="lazy" onerror="this.style.opacity=\'0.3\'"/></div>';
-    }).join("");
-  }).catch(function(){});
-}
-
-// ── Bookmarklets ──────────────────────────────────────────
-function loadBookmarklets() {
-  fetch("/api/bookmarklets").then(function(r){return r.json();}).then(function(items){
-    bookmarklets=items||[];
-    renderBookmarkBar();
-    // Restore saved visibility
-    try {
-      var saved=localStorage.getItem("kairo_bm_bar");
-      if (saved==="1"&&bookmarklets.length){
-        bmBarVisible=true;
-        document.getElementById("bookmark-bar").classList.add("visible");
-      }
-    } catch(e){}
-  }).catch(function(){});
-}
-
-// ── Cookie sync ───────────────────────────────────────────
-function loadServerCookies() {
-  return fetch("/api/cookies").then(function(r){return r.json();}).then(function(data){
-    if (!data.cookies) return;
-    data.cookies.split("||").forEach(function(entry){
-      var idx=entry.indexOf("=:="); if (idx===-1) return;
-      document.cookie=decodeURIComponent(entry.slice(0,idx))+"="+decodeURIComponent(entry.slice(idx+3))+"; path=/; SameSite=Lax";
-    });
-  }).catch(function(){});
-}
-function saveServerCookies() {
-  try {
-    var encoded=document.cookie.split(";").map(function(c){return c.trim();}).filter(Boolean)
-      .map(function(c){var i=c.indexOf("=");return i===-1?null:encodeURIComponent(c.slice(0,i).trim())+"=:="+encodeURIComponent(c.slice(i+1).trim());})
-      .filter(Boolean).join("||");
-    if (!encoded) return;
-    fetch("/api/cookies",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({cookies:encoded}),keepalive:true});
-  } catch(e){}
-}
-function clearSessions(){
-  document.cookie.split(";").forEach(function(c){document.cookie=c.trim().split("=")[0]+"=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";});
-  fetch("/api/cookies",{method:"DELETE"}).then(function(){alert("Sessions cleared.");});
-}
-function logout(){ fetch("/api/logout",{method:"POST"}).then(function(){location.href="/login.html";}); }
-
-// ── Inactivity ────────────────────────────────────────────
-var inactivityTimer;
-function resetTimer(){
-  clearTimeout(inactivityTimer);
-  inactivityTimer=setTimeout(function(){
-    fetch("/api/logout",{method:"POST"}).then(function(){document.getElementById("timeout-overlay").style.display="flex";});
-  },20*60*1000);
-}
-["mousemove","keydown","click","scroll","touchstart"].forEach(function(e){document.addEventListener(e,resetTimer,{passive:true});});
-
-// ── Wiring ────────────────────────────────────────────────
-document.getElementById("go-btn").addEventListener("click",go);
-document.getElementById("logout-btn").addEventListener("click",logout);
-document.getElementById("reset-btn").addEventListener("click",clearSessions);
-document.getElementById("signin-again-btn").addEventListener("click",function(){location.href="/login.html";});
-document.getElementById("url-input").addEventListener("keydown",function(e){if(e.key==="Enter")go();});
-
-// ── Auto-hide bar ──────────────────────────────────────────
-// Bar hides after 2.5s of no mouse movement, reappears when cursor near top
-var barHideTimer = null;
-var barVisible = true;
-
-function showBar() {
-  var bar = document.querySelector(".proxy-bar");
-  var bm  = document.getElementById("bookmark-bar");
-  if (!bar) return;
-  bar.classList.remove("hidden");
-  if (bm && bmBarVisible) bm.classList.remove("bar-hidden");
-  barVisible = true;
-  resetBarHideTimer();
-}
-
-function hideBar() {
-  var bar = document.querySelector(".proxy-bar");
-  var bm  = document.getElementById("bookmark-bar");
-  if (!bar) return;
-  bar.classList.add("hidden");
-  if (bm) bm.classList.add("bar-hidden");
-  barVisible = false;
-}
-
-function resetBarHideTimer() {
-  clearTimeout(barHideTimer);
-  barHideTimer = setTimeout(function() {
-    // Only auto-hide if we're in proxy view
-    if (document.getElementById("proxy-view").style.display !== "none") {
-      hideBar();
-    }
-  }, 2500);
-}
-
-// Show bar when mouse near top 60px of screen
-document.addEventListener("mousemove", function(e) {
-  if (document.getElementById("proxy-view").style.display === "none") return;
-  if (e.clientY < 60) {
-    showBar();
-  } else if (barVisible) {
-    resetBarHideTimer();
-  }
-});
-
-// Show bar on touch top area
-document.addEventListener("touchstart", function(e) {
-  if (document.getElementById("proxy-view").style.display === "none") return;
-  if (e.touches[0] && e.touches[0].clientY < 80) showBar();
-}, { passive: true });
-
-document.getElementById("bar-trigger").addEventListener("mouseenter", showBar);
-
-// Proxy bar interactions reset timer
-document.querySelector && document.addEventListener("click", function(e) {
-  var bar = document.querySelector(".proxy-bar");
-  if (bar && bar.contains(e.target)) resetBarHideTimer();
-});
-
-// ── Fullscreen ─────────────────────────────────────────────
-// requestFullscreen on document.documentElement to avoid black screen
-document.getElementById("proxy-fullscreen-btn").addEventListener("click", function() {
-  if (document.fullscreenElement) {
-    document.exitFullscreen().catch(function(){});
-  } else {
-    // Fullscreen the whole document — avoids black screen from div fullscreen
-    var el = document.documentElement;
-    (el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen).call(el)
-      .catch(function(e){ console.warn("Fullscreen:", e); });
-  }
-});
-
-// ── Settings & Site Cloak ─────────────────────────────────
-var CLOAK_PRESETS = [
-  { label: "Google Classroom", title: "Google Classroom", favicon: "https://ssl.gstatic.com/classroom/favicon.png" },
-  { label: "Khan Academy",     title: "Khan Academy",     favicon: "https://www.khanacademy.org/favicon.ico" },
-  { label: "Kahoot",           title: "Kahoot!",           favicon: "https://kahoot.com/favicon.ico" },
-  { label: "Quizlet",          title: "Quizlet",           favicon: "https://quizlet.com/favicon.ico" },
-  { label: "Google Docs",      title: "Google Docs",      favicon: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico" },
-];
-
-// Render presets
-(function() {
-  var container = document.getElementById("cloak-presets");
-  if (!container) return;
-  CLOAK_PRESETS.forEach(function(p) {
-    var btn = document.createElement("button");
-    btn.textContent = p.label;
-    btn.style.cssText = "background:none;border:1px solid #1c2028;border-radius:6px;color:#5a6370;font-size:0.72rem;font-family:'DM Sans',sans-serif;padding:3px 9px;cursor:pointer;transition:all 0.12s;";
-    btn.onmouseover = function(){ this.style.borderColor="#7b6ef6"; this.style.color="#e8ecf0"; };
-    btn.onmouseout  = function(){ this.style.borderColor="#1c2028"; this.style.color="#5a6370"; };
-    btn.addEventListener("click", function() {
-      document.getElementById("cloak-title").value = p.title;
-      document.getElementById("cloak-favicon").value = p.favicon;
-    });
-    container.appendChild(btn);
-  });
-})();
-
-function applyCloak() {
-  var title   = document.getElementById("cloak-title").value.trim();
-  var favicon = document.getElementById("cloak-favicon").value.trim();
-  if (title) {
-    document.title = title;
-    try { localStorage.setItem("kairo_cloak_title", title); } catch(e){}
-  }
-  if (favicon) {
-    var link = document.querySelector("link[rel~='icon']");
-    if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
-    link.href = favicon;
-    try { localStorage.setItem("kairo_cloak_favicon", favicon); } catch(e){}
-  }
-  document.getElementById("settings-overlay").style.display = "none";
-}
-
-function removeCloak() {
-  document.title = "Kairo";
-  var link = document.querySelector("link[rel~='icon']");
-  if (link) link.href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237b6ef6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='white'%3EK%3C/text%3E%3C/svg%3E";
-  try { localStorage.removeItem("kairo_cloak_title"); localStorage.removeItem("kairo_cloak_favicon"); } catch(e){}
-  document.getElementById("cloak-title").value = "";
-  document.getElementById("cloak-favicon").value = "";
-}
-
-// Restore saved cloak on page load
-(function() {
-  try {
-    var t = localStorage.getItem("kairo_cloak_title");
-    var f = localStorage.getItem("kairo_cloak_favicon");
-    if (t) { document.title = t; document.getElementById("cloak-title").value = t; }
-    if (f) {
-      var link = document.querySelector("link[rel~='icon']");
-      if (link) link.href = f;
-      document.getElementById("cloak-favicon").value = f;
-    }
-  } catch(e){}
-})();
-
-document.getElementById("settings-btn").addEventListener("click", function() {
-  document.getElementById("settings-overlay").style.display = "flex";
-});
-document.getElementById("settings-close").addEventListener("click", function() {
-  document.getElementById("settings-overlay").style.display = "none";
-});
-document.getElementById("settings-overlay").addEventListener("click", function(e) {
-  if (e.target === this) this.style.display = "none";
-});
-document.getElementById("cloak-apply-btn").addEventListener("click", applyCloak);
-document.getElementById("cloak-reset-btn").addEventListener("click", removeCloak);
-
-// ── Boot ──────────────────────────────────────────────────
-// Run auth check and asset loads in parallel for fastest startup
-Promise.all([
-  fetch("/api/me").then(function(r){return r.json();}).catch(function(){return {loggedIn:false};}),
-  loadServerCookies(),
-  loadPins(),
-  loadBookmarklets()
-]).then(function(results){
-  var me=results[0];
-  if (!me.loggedIn){location.href="/login.html";return;}
-  if (me.displayName) document.getElementById("greeting-name").textContent="Hi, "+me.displayName+" 👋";
-  if (me.isAdmin) document.getElementById("admin-link").style.display="inline-flex";
-  initScramjet();
-  ensureSW().catch(function(){});
-  ensureTransport().catch(function(){});
-  resetTimer();
-  setInterval(saveServerCookies,15000);
-  window.addEventListener("beforeunload",saveServerCookies);
-  showUI();
-}).catch(function(){location.href="/login.html";});
-</script>
-</body>
-</html>
+  bmB
