@@ -1,11 +1,12 @@
 {
   "pins": [
-    { "name": "YouTube",     "url": "https://www.youtube.com/?hl=en&gl=US", "icon": "youtube"   },
-    { "name": "Google",      "url": "https://www.google.com/?hl=en&gl=US",  "icon": "google"    },
-    { "name": "Spotify",     "url": "https://open.spotify.com",              "icon": "spotify"   },
-    { "name": "Discord",     "url": "https://discord.com/app",               "icon": "discord"   },
-    { "name": "Instagram",   "url": "https://www.instagram.com",             "icon": "instagram" },
-    { "name": "TikTok",      "url": "https://www.tiktok.com",                "icon": "tiktok"    },
-    { "name": "GeForce Now", "url": "https://play.geforcenow.com",           "icon": "nvidia"    }
+    { "name": "YouTube",     "url": "https://www.youtube.com/?hl=en&gl=US", "icon": "youtube"      },
+    { "name": "Google",      "url": "https://www.google.com/?hl=en&gl=US",  "icon": "google"       },
+    { "name": "Spotify",     "url": "https://open.spotify.com",              "icon": "spotify"      },
+    { "name": "Discord",     "url": "https://discord.com/app",               "icon": "discord"      },
+    { "name": "Instagram",   "url": "https://www.instagram.com",             "icon": "instagram"    },
+    { "name": "TikTok",      "url": "https://www.tiktok.com",                "icon": "tiktok"       },
+    { "name": "GeForce Now", "url": "https://play.geforcenow.com",           "icon": "nvidia"       },
+    { "name": "Blooket",     "url": "https://browser.lol",                  "icon": "googlechrome" }
   ]
 }
