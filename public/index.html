@@ -186,7 +186,10 @@
 </div>
 
 <!-- Proxy view — nav bar + bookmark bar only, frame is appended to body separately -->
-<div id="proxy-view" style="display:none;position:fixed;top:0;left:0;right:0;z-index:495;flex-direction:column;">
+<div id="proxy-view" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;background:#07080a;">
+
+  <!-- Invisible trigger zone at top — hover to show bar -->
+  <div id="bar-trigger"></div>
 
   <!-- URL / nav bar -->
   <div class="proxy-bar" style="position:relative;gap:6px;">
@@ -333,42 +336,27 @@ function go() {
 function goTo(url){ document.getElementById("url-input").value=url; go(); }
 
 function openProxy(url) {
-  // Remove old frame if exists
   if (currentFrame) {
     try { currentFrame.frame.remove(); } catch(e) {}
     currentFrame = null;
   }
   startProgress(url);
   try {
-    // Match official scramjet-app exactly:
-    // createFrame() then append to body, set fixed positioning to fill screen
     var frame = scramjet.createFrame();
     frame.frame.id = "sj-frame";
-    frame.frame.style.cssText = [
-      "position:fixed",
-      "inset:0",
-      "width:100%",
-      "height:100%",
-      "border:none",
-      "z-index:490",
-      "background:#fff",
-      "display:block"
-    ].join(";");
+    frame.frame.style.cssText = "position:fixed;inset:0;width:100%;height:100%;border:none;z-index:490;background:#fff;display:block;";
     document.body.appendChild(frame.frame);
     currentFrame = frame;
-
-    // Show proxy UI overlay on top
     document.getElementById("proxy-view").style.display = "flex";
     document.getElementById("home").style.display = "none";
     document.getElementById("proxy-url-bar").value = url;
-
+    resetBarHideTimer();
     frame.frame.addEventListener("load", function() { finishProgress(); });
     frame.go(url);
     saveServerCookies();
   } catch(e) {
     finishProgress();
     showError("Failed: " + e.message);
-    console.error("[Kairo] openProxy:", e);
   }
 }
 
@@ -516,16 +504,74 @@ document.getElementById("reset-btn").addEventListener("click",clearSessions);
 document.getElementById("signin-again-btn").addEventListener("click",function(){location.href="/login.html";});
 document.getElementById("url-input").addEventListener("keydown",function(e){if(e.key==="Enter")go();});
 
-// Fullscreen proxy button
+// ── Auto-hide bar ──────────────────────────────────────────
+// Bar hides after 2.5s of no mouse movement, reappears when cursor near top
+var barHideTimer = null;
+var barVisible = true;
+
+function showBar() {
+  var bar = document.querySelector(".proxy-bar");
+  var bm  = document.getElementById("bookmark-bar");
+  if (!bar) return;
+  bar.classList.remove("hidden");
+  if (bm && bmBarVisible) bm.classList.remove("bar-hidden");
+  barVisible = true;
+  resetBarHideTimer();
+}
+
+function hideBar() {
+  var bar = document.querySelector(".proxy-bar");
+  var bm  = document.getElementById("bookmark-bar");
+  if (!bar) return;
+  bar.classList.add("hidden");
+  if (bm) bm.classList.add("bar-hidden");
+  barVisible = false;
+}
+
+function resetBarHideTimer() {
+  clearTimeout(barHideTimer);
+  barHideTimer = setTimeout(function() {
+    // Only auto-hide if we're in proxy view
+    if (document.getElementById("proxy-view").style.display !== "none") {
+      hideBar();
+    }
+  }, 2500);
+}
+
+// Show bar when mouse near top 60px of screen
+document.addEventListener("mousemove", function(e) {
+  if (document.getElementById("proxy-view").style.display === "none") return;
+  if (e.clientY < 60) {
+    showBar();
+  } else if (barVisible) {
+    resetBarHideTimer();
+  }
+});
+
+// Show bar on touch top area
+document.addEventListener("touchstart", function(e) {
+  if (document.getElementById("proxy-view").style.display === "none") return;
+  if (e.touches[0] && e.touches[0].clientY < 80) showBar();
+}, { passive: true });
+
+document.getElementById("bar-trigger").addEventListener("mouseenter", showBar);
+
+// Proxy bar interactions reset timer
+document.querySelector && document.addEventListener("click", function(e) {
+  var bar = document.querySelector(".proxy-bar");
+  if (bar && bar.contains(e.target)) resetBarHideTimer();
+});
+
+// ── Fullscreen ─────────────────────────────────────────────
+// requestFullscreen on document.documentElement to avoid black screen
 document.getElementById("proxy-fullscreen-btn").addEventListener("click", function() {
-  var container = document.getElementById("proxy-view");
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(function(){});
-  } else if (container) {
-    container.requestFullscreen().catch(function(){
-      var frame = document.getElementById("sj-frame");
-      if (frame && frame.requestFullscreen) frame.requestFullscreen().catch(function(){});
-    });
+  } else {
+    // Fullscreen the whole document — avoids black screen from div fullscreen
+    var el = document.documentElement;
+    (el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen).call(el)
+      .catch(function(e){ console.warn("Fullscreen:", e); });
   }
 });
 
