@@ -231,3 +231,53 @@ textarea { resize:vertical;min-height:80px; }
   border-color: #7b6ef6;
   color: #e8ecf0;
 }
+
+/* ── Auto-hide proxy bar ── */
+#proxy-view {
+  background: #07080a;
+}
+
+.proxy-bar {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.proxy-bar.hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+#bookmark-bar {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+#bookmark-bar.bar-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* When bar is hidden, frame fills full screen */
+#proxy-view.bar-hidden #frame-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: 100vh !important;
+}
+
+/* Hover trigger zone at top */
+#bar-trigger {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  z-index: 510;
+  display: none;
+}
+
+#proxy-view.bar-hidden #bar-trigger {
+  display: block;
+}
