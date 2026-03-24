@@ -332,4 +332,153 @@ document.getElementById("proxy-fullscreen-btn").addEventListener("click",functio
 
 // ── Bookmark bar toggle ───────────────────────────────────
 document.getElementById("bm-bar-toggle-btn").addEventListener("click",function(){
-  bmB
+  bmBarVisible=!bmBarVisible;
+  var bar=document.getElementById("bookmark-bar");
+  if(bmBarVisible)bar.classList.add("visible");else bar.classList.remove("visible");
+  try{localStorage.setItem("kairo_bm_bar",bmBarVisible?"1":"0");}catch(e){}
+});
+
+// ── Devtools ──────────────────────────────────────────────
+document.addEventListener("keydown",function(e){
+  if(e.ctrlKey&&e.shiftKey&&e.altKey&&(e.key==="I"||e.key==="i")){
+    e.preventDefault();if(currentFrame&&currentFrame.frame)window.open(currentFrame.frame.src,"_blank");
+  }
+});
+
+// ── Bookmarks ─────────────────────────────────────────────
+function runBookmarklet(code){
+  if(!currentFrame)return;
+  try{currentFrame.go("javascript:"+encodeURIComponent("(function(){"+code+"})()"));}catch(e){console.warn("BM:",e);}
+}
+function renderBookmarkBar(){
+  var bar=document.getElementById("bookmark-bar");bar.innerHTML="";
+  if(!bookmarklets.length)return;
+  bar.innerHTML=bookmarklets.map(function(b,i){
+    return '<button class="bm-btn" data-i="'+i+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>'+b.name+'</button>';
+  }).join("");
+  bar.querySelectorAll(".bm-btn").forEach(function(el){
+    el.addEventListener("click",function(){var b=bookmarklets[parseInt(this.getAttribute("data-i"))];if(b)runBookmarklet(b.code);});
+  });
+}
+
+// ── Pins ──────────────────────────────────────────────────
+function loadPins(){
+  fetch("/api/pins").then(function(r){return r.json();}).then(function(data){
+    document.getElementById("pins-grid").innerHTML=(data.pins||[]).map(function(p){
+      return '<div class="pin" onclick="goTo(\''+addGeo(p.url)+'\')" title="'+p.name+'">' +
+        '<img src="https://unpkg.com/simple-icons@latest/icons/'+p.icon+'.svg" alt="'+p.name+'" loading="lazy" onerror="this.style.opacity=\'0.3\'"/></div>';
+    }).join("");
+  }).catch(function(){});
+}
+
+// ── Bookmarklets ──────────────────────────────────────────
+function loadBookmarklets(){
+  fetch("/api/bookmarklets").then(function(r){return r.json();}).then(function(items){
+    bookmarklets=items||[];renderBookmarkBar();
+    try{var s=localStorage.getItem("kairo_bm_bar");if(s==="1"&&bookmarklets.length){bmBarVisible=true;document.getElementById("bookmark-bar").classList.add("visible");}}catch(e){}
+  }).catch(function(){});
+}
+
+// ── Cookie sync ───────────────────────────────────────────
+function loadServerCookies(){
+  return fetch("/api/cookies").then(function(r){return r.json();}).then(function(data){
+    if(!data.cookies)return;
+    data.cookies.split("||").forEach(function(entry){
+      var idx=entry.indexOf("=:=");if(idx===-1)return;
+      document.cookie=decodeURIComponent(entry.slice(0,idx))+"="+decodeURIComponent(entry.slice(idx+3))+"; path=/; SameSite=Lax";
+    });
+  }).catch(function(){});
+}
+function saveServerCookies(){
+  try{
+    var encoded=document.cookie.split(";").map(function(c){return c.trim();}).filter(Boolean)
+      .map(function(c){var i=c.indexOf("=");return i===-1?null:encodeURIComponent(c.slice(0,i).trim())+"=:="+encodeURIComponent(c.slice(i+1).trim());})
+      .filter(Boolean).join("||");
+    if(!encoded)return;
+    fetch("/api/cookies",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({cookies:encoded}),keepalive:true});
+  }catch(e){}
+}
+function clearSessions(){
+  document.cookie.split(";").forEach(function(c){document.cookie=c.trim().split("=")[0]+"=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";});
+  fetch("/api/cookies",{method:"DELETE"}).then(function(){alert("Sessions cleared.");});
+}
+function logout(){fetch("/api/logout",{method:"POST"}).then(function(){location.href="/login.html";});}
+
+// ── Inactivity ────────────────────────────────────────────
+var inactivityTimer;
+function resetTimer(){
+  clearTimeout(inactivityTimer);
+  inactivityTimer=setTimeout(function(){
+    fetch("/api/logout",{method:"POST"}).then(function(){document.getElementById("timeout-overlay").style.display="flex";});
+  },20*60*1000);
+}
+["mousemove","keydown","click","scroll","touchstart"].forEach(function(e){document.addEventListener(e,resetTimer,{passive:true});});
+
+// ── Settings / Site Cloak ─────────────────────────────────
+var CLOAK_PRESETS=[
+  {label:"Google Classroom",title:"Google Classroom",favicon:"https://ssl.gstatic.com/classroom/favicon.png"},
+  {label:"Khan Academy",title:"Khan Academy",favicon:"https://www.khanacademy.org/favicon.ico"},
+  {label:"Kahoot",title:"Kahoot!",favicon:"https://kahoot.com/favicon.ico"},
+  {label:"Quizlet",title:"Quizlet",favicon:"https://quizlet.com/favicon.ico"},
+  {label:"Google Docs",title:"Google Docs",favicon:"https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico"},
+];
+(function(){
+  var c=document.getElementById("cloak-presets");if(!c)return;
+  CLOAK_PRESETS.forEach(function(p){
+    var btn=document.createElement("button");btn.textContent=p.label;
+    btn.style.cssText="background:none;border:1px solid #1c2028;border-radius:6px;color:#5a6370;font-size:0.72rem;font-family:'DM Sans',sans-serif;padding:3px 9px;cursor:pointer;";
+    btn.addEventListener("click",function(){document.getElementById("cloak-title").value=p.title;document.getElementById("cloak-favicon").value=p.favicon;});
+    c.appendChild(btn);
+  });
+  // Restore saved cloak
+  try{
+    var t=localStorage.getItem("kairo_cloak_title"),f=localStorage.getItem("kairo_cloak_favicon");
+    if(t){document.title=t;document.getElementById("cloak-title").value=t;}
+    if(f){var lnk=document.querySelector("link[rel~='icon']");if(lnk)lnk.href=f;document.getElementById("cloak-favicon").value=f;}
+  }catch(e){}
+})();
+function applyCloak(){
+  var t=document.getElementById("cloak-title").value.trim(),f=document.getElementById("cloak-favicon").value.trim();
+  if(t){document.title=t;try{localStorage.setItem("kairo_cloak_title",t);}catch(e){}}
+  if(f){var lnk=document.querySelector("link[rel~='icon']");if(!lnk){lnk=document.createElement("link");lnk.rel="icon";document.head.appendChild(lnk);}lnk.href=f;try{localStorage.setItem("kairo_cloak_favicon",f);}catch(e){}}
+  document.getElementById("settings-overlay").style.display="none";
+}
+function removeCloak(){
+  document.title="Kairo";
+  var lnk=document.querySelector("link[rel~='icon']");
+  if(lnk)lnk.href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237b6ef6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='white'%3EK%3C/text%3E%3C/svg%3E";
+  try{localStorage.removeItem("kairo_cloak_title");localStorage.removeItem("kairo_cloak_favicon");}catch(e){}
+  document.getElementById("cloak-title").value="";document.getElementById("cloak-favicon").value="";
+}
+document.getElementById("settings-btn").addEventListener("click",function(){document.getElementById("settings-overlay").style.display="flex";});
+document.getElementById("settings-close").addEventListener("click",function(){document.getElementById("settings-overlay").style.display="none";});
+document.getElementById("settings-overlay").addEventListener("click",function(e){if(e.target===this)this.style.display="none";});
+document.getElementById("cloak-apply-btn").addEventListener("click",applyCloak);
+document.getElementById("cloak-reset-btn").addEventListener("click",removeCloak);
+
+// ── Wire buttons ──────────────────────────────────────────
+document.getElementById("go-btn").addEventListener("click",go);
+document.getElementById("logout-btn").addEventListener("click",logout);
+document.getElementById("reset-btn").addEventListener("click",clearSessions);
+document.getElementById("signin-again-btn").addEventListener("click",function(){location.href="/login.html";});
+document.getElementById("url-input").addEventListener("keydown",function(e){if(e.key==="Enter")go();});
+
+// ── Boot ──────────────────────────────────────────────────
+Promise.all([
+  fetch("/api/me").then(function(r){return r.json();}).catch(function(){return{loggedIn:false};}),
+  loadServerCookies(),loadPins(),loadBookmarklets()
+]).then(function(results){
+  var me=results[0];
+  if(!me.loggedIn){location.href="/login.html";return;}
+  if(me.displayName)document.getElementById("greeting-name").textContent="Hi, "+me.displayName+" 👋";
+  if(me.isAdmin)document.getElementById("admin-link").style.display="inline-flex";
+  initScramjet();
+  ensureSW().catch(function(){});
+  ensureTransport().catch(function(){});
+  resetTimer();setInterval(saveServerCookies,15000);
+  window.addEventListener("beforeunload",saveServerCookies);
+  showUI();
+}).catch(function(){location.href="/login.html";});
+</script>
+</body>
+</html>
