@@ -284,12 +284,13 @@ function openProxy(url){
     frame.frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:none;z-index:490;background:#fff;display:block;";
     document.body.appendChild(frame.frame);
     currentFrame=frame;
-    // Show bar overlay (pointer-events:none so clicks go through to frame)
+    
+    // Show bar overlay
     document.getElementById("proxy-view").style.display="flex";
     document.getElementById("home").style.display="none";
     document.getElementById("proxy-url-bar").value=url;
     
-    // Show the proxy bar temporarily when opening, then let it hide if not hovered
+    // Briefly show the proxy bar, then slide it up
     var proxyControls = document.getElementById("proxy-controls");
     proxyControls.style.transform = "translateY(0)";
     setTimeout(function() {
@@ -298,15 +299,20 @@ function openProxy(url){
       }
     }, 2000);
 
-    // Fallback: forcefully remove loading screen if it hangs for 4 seconds
-    var loaded = false;
-    var loadHandler = function(){
-      if(loaded) return;
-      loaded = true;
+    // --- The Infinite Loader Fix ---
+    var isLoaded = false;
+    var markDone = function() {
+      if (isLoaded) return;
+      isLoaded = true;
       finishProgress();
     };
-    frame.frame.addEventListener("load", loadHandler);
-    setTimeout(loadHandler, 4000);
+    
+    // 1. Try to catch the normal load event
+    frame.frame.addEventListener("load", markDone);
+    
+    // 2. If the site blocks it, force it to clear after 3.5 seconds
+    setTimeout(markDone, 3500);
+    // -------------------------------
 
     frame.go(url);
     saveServerCookies();
@@ -326,7 +332,6 @@ function showError(msg){document.getElementById("error-msg").textContent=msg||"S
 function hideError(){document.getElementById("error-toast").style.display="none";}
 
 // ── Proxy UI Logic ────────────────────────────────────────
-// Auto-hide proxy bar logic utilizing the transparent hit-zone
 document.getElementById("proxy-hit-zone").addEventListener("mouseenter", function() {
   document.getElementById("proxy-controls").style.transform = "translateY(0)";
 });
@@ -339,14 +344,26 @@ document.getElementById("proxy-back-btn").addEventListener("click",function(){tr
 document.getElementById("proxy-fwd-btn").addEventListener("click",function(){try{currentFrame&&currentFrame.frame.contentWindow.history.forward();}catch(e){}});
 document.getElementById("proxy-reload-btn").addEventListener("click",function(){
   if(!currentFrame)return;var url=document.getElementById("proxy-url-bar").value;startProgress(url);
-  try{currentFrame.frame.contentWindow.location.reload();}catch(e){currentFrame.go(url);}
+  try{
+    currentFrame.frame.contentWindow.location.reload();
+    setTimeout(finishProgress, 3500); // safety fallback
+  }catch(e){
+    currentFrame.go(url);
+    setTimeout(finishProgress, 3500); // safety fallback
+  }
 });
 document.getElementById("proxy-home-btn").addEventListener("click",closeProxy);
 document.getElementById("proxy-url-bar").addEventListener("keydown",function(e){
   if(e.key!=="Enter")return;
   var val=typeof search==="function"?search(this.value.trim(),SEARCH_ENGINE):this.value.trim();
   if(val.startsWith("http://"))val=val.replace("http://","https://");val=addGeo(val);
-  startProgress(val);ensureTransport().then(function(){if(currentFrame){currentFrame.go(val);document.getElementById("proxy-url-bar").value=val;}});
+  startProgress(val);ensureTransport().then(function(){
+    if(currentFrame){
+      currentFrame.go(val);
+      document.getElementById("proxy-url-bar").value=val;
+      setTimeout(finishProgress, 3500); // safety fallback
+    }
+  });
 });
 
 // ── Fullscreen ────────────────────────────────────────────
