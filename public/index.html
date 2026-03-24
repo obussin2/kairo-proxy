@@ -233,7 +233,14 @@ function initScramjet(){
   try{
     if(typeof $scramjetLoadController!=="function")return;
     var ctrl=$scramjetLoadController();
-    scramjet=new ctrl.ScramjetController({files:{wasm:"/scram/scramjet.wasm.wasm",all:"/scram/scramjet.all.js",sync:"/scram/scramjet.sync.js"}});
+    // FIX 1: Changed scramjet.wasm.wasm to scramjet.wasm
+    scramjet=new ctrl.ScramjetController({
+      files:{
+        wasm:"/scram/scramjet.wasm", 
+        all:"/scram/scramjet.all.js",
+        sync:"/scram/scramjet.sync.js"
+      }
+    });
     scramjet.init();
   }catch(e){console.error("[Kairo] SJ:",e);}
 }
@@ -245,7 +252,10 @@ function getConn(){
 }
 function ensureTransport(){
   var c=getConn();if(!c)return Promise.resolve();
-  return c.getTransport().then(function(t){if(t!=="/libcurl/index.mjs")return c.setTransport("/libcurl/index.mjs",[{websocket:WISP_URL}]);}).catch(function(){});
+  return c.getTransport().then(function(t){
+    // FIX 2: Changed "websocket:" to "wisp:" so the proxy actually gets internet
+    if(t!=="/libcurl/index.mjs") return c.setTransport("/libcurl/index.mjs",[{wisp:WISP_URL}]);
+  }).catch(function(){});
 }
 
 // ── SW ────────────────────────────────────────────────────
