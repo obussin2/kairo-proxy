@@ -228,7 +228,7 @@ function finishProgress(){
   if(loader)setTimeout(function(){loader.classList.add("hidden");setTimeout(function(){loader.style.display="none";},300);},250);
 }
 
-// ── Scramjet ──────────────────────────────────────────────
+// ── Scramjet (FIXED PATHS) ────────────────────────────────
 function initScramjet(){
   try{
     if(typeof $scramjetLoadController!=="function")return;
@@ -236,16 +236,18 @@ function initScramjet(){
     scramjet=new ctrl.ScramjetController({
       prefix: "/scram/",
       files:{
-        wasm:"/scram/scramjet.wasm.wasm", 
-        all:"/scram/scramjet.all.js",
-        sync:"/scram/scramjet.sync.js"
+        wasm:   "/scram/scramjet.wasm", 
+        worker: "/scram/scramjet.worker.js",
+        client: "/scram/scramjet.client.js",
+        all:    "/scram/scramjet.all.js",
+        sync:   "/scram/scramjet.sync.js"
       }
     });
     scramjet.init();
   }catch(e){console.error("[Kairo] SJ:",e);}
 }
 
-// ── BareMux ───────────────────────────────────────────────
+// ── BareMux (UPGRADED TO EPOXY) ───────────────────────────
 function getConn(){
   if(!connection)try{connection=new BareMux.BareMuxConnection("/baremux/worker.js");}catch(e){return null;}
   return connection;
@@ -253,8 +255,9 @@ function getConn(){
 function ensureTransport(){
   var c=getConn();if(!c)return Promise.resolve();
   return c.getTransport().then(function(t){
-    if(t!=="/libcurl/index.mjs") return c.setTransport("/libcurl/index.mjs",[{wisp:WISP_URL}]);
-  }).catch(function(){});
+    // Upgraded from Libcurl to Epoxy. Epoxy is fully stable and doesn't crash if headers are blocked!
+    if(t!=="/epoxy/index.mjs") return c.setTransport("/epoxy/index.mjs",[{wisp:WISP_URL}]);
+  }).catch(function(e){console.error("Transport failed:", e)});
 }
 
 // ── SW ────────────────────────────────────────────────────
