@@ -1,6 +1,4 @@
-// 1. Import the BareMux engine so the SW can actually connect to the internet
-importScripts("/baremux/bare.cjs");
-// 2. Import the Scramjet worker (NOT all.js)
+// This MUST be .worker.js, NOT .all.js
 importScripts("/scram/scramjet.worker.js");
 
 const { ScramjetServiceWorker } = $scramjetLoadWorker();
