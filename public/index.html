@@ -125,41 +125,42 @@
   <footer class="footer-bar"><span>Kairo &mdash; Private Browsing</span></footer>
 </div>
 
-<!-- Proxy view — bar sits on top, frame is fixed behind it -->
 <div id="proxy-view" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;pointer-events:none;">
-  <div class="proxy-bar" style="position:relative;gap:6px;pointer-events:all;">
-    <div id="top-progress"></div>
-    <button class="proxy-back" id="proxy-back-btn" title="Back">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <button class="proxy-back" id="proxy-fwd-btn" title="Forward">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-    </button>
-    <input id="proxy-url-bar" class="proxy-url-input" placeholder="Enter URL…" autocomplete="off" spellcheck="false"/>
-    <button class="proxy-back" id="proxy-reload-btn" title="Reload">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
-    </button>
-    <button class="proxy-back" id="bm-bar-toggle-btn" title="Toggle bookmarks">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>
-    </button>
-    <button class="proxy-back" id="proxy-fullscreen-btn" title="Fullscreen">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-    </button>
-    <button class="proxy-back" id="proxy-home-btn" title="Home">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    </button>
+  <div id="proxy-hit-zone" style="position:absolute;top:0;left:0;right:0;height:15px;pointer-events:all;z-index:501;"></div>
+  
+  <div id="proxy-controls" style="display:flex;flex-direction:column;pointer-events:all;transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);transform:translateY(-100%);">
+    <div class="proxy-bar" style="position:relative;gap:6px;pointer-events:all;">
+      <div id="top-progress"></div>
+      <button class="proxy-back" id="proxy-back-btn" title="Back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="proxy-back" id="proxy-fwd-btn" title="Forward">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <input id="proxy-url-bar" class="proxy-url-input" placeholder="Enter URL…" autocomplete="off" spellcheck="false"/>
+      <button class="proxy-back" id="proxy-reload-btn" title="Reload">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
+      </button>
+      <button class="proxy-back" id="bm-bar-toggle-btn" title="Toggle bookmarks">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>
+      </button>
+      <button class="proxy-back" id="proxy-fullscreen-btn" title="Fullscreen">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      </button>
+      <button class="proxy-back" id="proxy-home-btn" title="Home">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </button>
+    </div>
+    <div id="bookmark-bar" style="pointer-events:all;"></div>
   </div>
-  <div id="bookmark-bar" style="pointer-events:all;"></div>
 </div>
 
-<!-- Frame loader overlay -->
 <div id="frame-loader" style="display:none;position:fixed;inset:0;background:#07080a;z-index:492;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
   <div class="frame-loader-bar"><div class="frame-loader-fill"></div></div>
   <div class="frame-loader-text">Loading…</div>
   <div style="font-size:0.68rem;color:#353d4a;font-family:'DM Sans',sans-serif;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="frame-loader-url"></div>
 </div>
 
-<!-- Settings modal -->
 <div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,8,10,0.85);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
   <div style="background:#0e1014;border:1px solid #1c2028;border-radius:18px;padding:28px;width:100%;max-width:400px;margin:20px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
@@ -193,7 +194,6 @@
   </div>
 </div>
 
-<!-- Inactivity overlay -->
 <div id="timeout-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,8,10,0.96);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
   <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:#e8ecf0;">Session expired</div>
   <div style="font-size:0.85rem;color:#5a6370;">You were inactive for 20 minutes</div>
@@ -274,7 +274,6 @@ function go(){
 }
 function goTo(url){document.getElementById("url-input").value=url;go();}
 
-// Replace your existing openProxy function with this updated one
 function openProxy(url){
   if(currentFrame){try{currentFrame.frame.remove();}catch(e){}currentFrame=null;}
   startProgress(url);
@@ -285,19 +284,21 @@ function openProxy(url){
     frame.frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:none;z-index:490;background:#fff;display:block;";
     document.body.appendChild(frame.frame);
     currentFrame=frame;
-    
     // Show bar overlay (pointer-events:none so clicks go through to frame)
     document.getElementById("proxy-view").style.display="flex";
     document.getElementById("home").style.display="none";
     document.getElementById("proxy-url-bar").value=url;
+    
+    // Show the proxy bar temporarily when opening, then let it hide if not hovered
+    var proxyControls = document.getElementById("proxy-controls");
+    proxyControls.style.transform = "translateY(0)";
+    setTimeout(function() {
+      if (!proxyControls.matches(':hover')) {
+        proxyControls.style.transform = "translateY(-100%)";
+      }
+    }, 2000);
 
-    // Prepare the proxy bar and bookmark bar for smooth auto-hiding
-    var pBar = document.querySelector(".proxy-bar");
-    var bmBar = document.getElementById("bookmark-bar");
-    if (pBar) pBar.style.transition = "transform 0.3s ease, opacity 0.3s ease";
-    if (bmBar) bmBar.style.transition = "transform 0.3s ease, opacity 0.3s ease";
-
-    // FIX: Fallback timeout to clear the loading screen if the 'load' event fails to fire
+    // Fallback: forcefully remove loading screen if it hangs for 4 seconds
     var loaded = false;
     var loadHandler = function(){
       if(loaded) return;
@@ -305,45 +306,17 @@ function openProxy(url){
       finishProgress();
     };
     frame.frame.addEventListener("load", loadHandler);
-    setTimeout(loadHandler, 5000); // Forces loader to hide after 5 seconds so you aren't stuck
+    setTimeout(loadHandler, 4000);
 
     frame.go(url);
     saveServerCookies();
   }catch(e){finishProgress();showError("Failed: "+e.message);}
 }
 
-// ADD THIS right below the openProxy function
-// ── Auto-hide Proxy Bar Logic ─────────────────────────────
-document.addEventListener("mousemove", function(e) {
-  var proxyView = document.getElementById("proxy-view");
-  var pBar = document.querySelector(".proxy-bar");
-  var bmBar = document.getElementById("bookmark-bar");
-
-  // Only trigger if the proxy view is actually open
-  if (proxyView && proxyView.style.display !== "none" && pBar) {
-    // If mouse is within the top 65 pixels of the screen, slide the bar down
-    if (e.clientY <= 65) {
-      pBar.style.transform = "translateY(0)";
-      pBar.style.opacity = "1";
-      if (bmBar) {
-        bmBar.style.transform = "translateY(0)";
-        bmBar.style.opacity = "1";
-      }
-    } else {
-      // Otherwise, slide it up and out of the way
-      pBar.style.transform = "translateY(-100%)";
-      pBar.style.opacity = "0";
-      if (bmBar) {
-        bmBar.style.transform = "translateY(-100%)";
-        bmBar.style.opacity = "0";
-      }
-    }
-  }
-});
-
 function closeProxy(){
   if(currentFrame){try{currentFrame.frame.remove();}catch(e){}currentFrame=null;}
   document.getElementById("proxy-view").style.display="none";
+  document.getElementById("proxy-controls").style.transform="translateY(-100%)";
   document.getElementById("home").style.display="block";
   var loader=document.getElementById("frame-loader");
   if(loader){loader.classList.remove("hidden");loader.style.display="none";}
@@ -351,6 +324,15 @@ function closeProxy(){
 
 function showError(msg){document.getElementById("error-msg").textContent=msg||"Something went wrong.";document.getElementById("error-toast").style.display="flex";}
 function hideError(){document.getElementById("error-toast").style.display="none";}
+
+// ── Proxy UI Logic ────────────────────────────────────────
+// Auto-hide proxy bar logic utilizing the transparent hit-zone
+document.getElementById("proxy-hit-zone").addEventListener("mouseenter", function() {
+  document.getElementById("proxy-controls").style.transform = "translateY(0)";
+});
+document.getElementById("proxy-controls").addEventListener("mouseleave", function() {
+  document.getElementById("proxy-controls").style.transform = "translateY(-100%)";
+});
 
 // ── Proxy bar buttons ─────────────────────────────────────
 document.getElementById("proxy-back-btn").addEventListener("click",function(){try{currentFrame&&currentFrame.frame.contentWindow.history.back();}catch(e){}});
