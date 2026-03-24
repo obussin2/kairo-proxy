@@ -228,13 +228,13 @@ function finishProgress(){
   if(loader)setTimeout(function(){loader.classList.add("hidden");setTimeout(function(){loader.style.display="none";},300);},250);
 }
 
-// ── Scramjet (FIXED PATHS) ────────────────────────────────
+// ── Scramjet (THE FIX) ────────────────────────────────
 function initScramjet(){
   try{
     if(typeof $scramjetLoadController!=="function")return;
     var ctrl=$scramjetLoadController();
     scramjet=new ctrl.ScramjetController({
-      prefix: "/scram/",
+      prefix: "/proxy/", // THIS CANNOT BE "/scram/" OR IT CRASHES
       files:{
         wasm:   "/scram/scramjet.wasm", 
         worker: "/scram/scramjet.worker.js",
@@ -246,7 +246,6 @@ function initScramjet(){
     scramjet.init();
   }catch(e){console.error("[Kairo] SJ:",e);}
 }
-
 // ── BareMux (UPGRADED TO EPOXY) ───────────────────────────
 function getConn(){
   if(!connection)try{connection=new BareMux.BareMuxConnection("/baremux/worker.js");}catch(e){return null;}
