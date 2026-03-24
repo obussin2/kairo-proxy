@@ -274,6 +274,7 @@ function go(){
 }
 function goTo(url){document.getElementById("url-input").value=url;go();}
 
+// Replace your existing openProxy function with this updated one
 function openProxy(url){
   if(currentFrame){try{currentFrame.frame.remove();}catch(e){}currentFrame=null;}
   startProgress(url);
@@ -284,15 +285,61 @@ function openProxy(url){
     frame.frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:none;z-index:490;background:#fff;display:block;";
     document.body.appendChild(frame.frame);
     currentFrame=frame;
+    
     // Show bar overlay (pointer-events:none so clicks go through to frame)
     document.getElementById("proxy-view").style.display="flex";
     document.getElementById("home").style.display="none";
     document.getElementById("proxy-url-bar").value=url;
-    frame.frame.addEventListener("load",function(){finishProgress();});
+
+    // Prepare the proxy bar and bookmark bar for smooth auto-hiding
+    var pBar = document.querySelector(".proxy-bar");
+    var bmBar = document.getElementById("bookmark-bar");
+    if (pBar) pBar.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+    if (bmBar) bmBar.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+
+    // FIX: Fallback timeout to clear the loading screen if the 'load' event fails to fire
+    var loaded = false;
+    var loadHandler = function(){
+      if(loaded) return;
+      loaded = true;
+      finishProgress();
+    };
+    frame.frame.addEventListener("load", loadHandler);
+    setTimeout(loadHandler, 5000); // Forces loader to hide after 5 seconds so you aren't stuck
+
     frame.go(url);
     saveServerCookies();
   }catch(e){finishProgress();showError("Failed: "+e.message);}
 }
+
+// ADD THIS right below the openProxy function
+// ── Auto-hide Proxy Bar Logic ─────────────────────────────
+document.addEventListener("mousemove", function(e) {
+  var proxyView = document.getElementById("proxy-view");
+  var pBar = document.querySelector(".proxy-bar");
+  var bmBar = document.getElementById("bookmark-bar");
+
+  // Only trigger if the proxy view is actually open
+  if (proxyView && proxyView.style.display !== "none" && pBar) {
+    // If mouse is within the top 65 pixels of the screen, slide the bar down
+    if (e.clientY <= 65) {
+      pBar.style.transform = "translateY(0)";
+      pBar.style.opacity = "1";
+      if (bmBar) {
+        bmBar.style.transform = "translateY(0)";
+        bmBar.style.opacity = "1";
+      }
+    } else {
+      // Otherwise, slide it up and out of the way
+      pBar.style.transform = "translateY(-100%)";
+      pBar.style.opacity = "0";
+      if (bmBar) {
+        bmBar.style.transform = "translateY(-100%)";
+        bmBar.style.opacity = "0";
+      }
+    }
+  }
+});
 
 function closeProxy(){
   if(currentFrame){try{currentFrame.frame.remove();}catch(e){}currentFrame=null;}
