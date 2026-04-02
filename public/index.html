@@ -270,31 +270,34 @@ function go(){
   val=addGeo(val);
   if(!scramjet)initScramjet();
   if(!scramjet){showError("Proxy not ready — reload the page");return;}
-  ensureSW().then(ensureTransport).then(function(){openProxy(val);}).catch(function(e){showError(e.message||"Failed");});
+  // Official order: register SW first, then open proxy (transport set inside openProxy)
+  ensureSW().then(function(){openProxy(val);}).catch(function(e){showError(e.message||"Failed");});
 }
 function goTo(url){document.getElementById("url-input").value=url;go();}
 
 function openProxy(url){
   if(currentFrame){try{currentFrame.frame.remove();}catch(e){}currentFrame=null;}
   startProgress(url);
-  try{
-    var frame=scramjet.createFrame();
-    frame.frame.id="sj-frame";
-    // transparent bg — white was causing black flash
-    frame.frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:none;z-index:490;background:transparent;display:block;";
-    document.body.appendChild(frame.frame);
-    currentFrame=frame;
-    document.getElementById("proxy-view").style.display="flex";
-    document.getElementById("home").style.display="none";
-    document.getElementById("proxy-url-bar").value=url;
-    // White body so transparent frame doesn't show dark background
-    document.body.style.background="#fff";
-    // Save URL so F5 browser refresh restores it
-    try{sessionStorage.setItem("kairo_last_url",url);}catch(e){}
-    frame.frame.addEventListener("load",function(){finishProgress();});
-    frame.go(url);
-    saveServerCookies();
-  }catch(e){finishProgress();showError("Failed: "+e.message);}
+  // Ensure transport is set BEFORE creating frame — matches official scramjet-app order
+  ensureTransport().then(function(){
+    try{
+      var frame=scramjet.createFrame();
+      frame.frame.id="sj-frame";
+      // Match official scramjet-app: no custom CSS, just append to body
+      // Scramjet handles the frame internally
+      frame.frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:none;z-index:490;display:block;";
+      document.body.style.background="#fff";
+      document.body.appendChild(frame.frame);
+      currentFrame=frame;
+      document.getElementById("proxy-view").style.display="flex";
+      document.getElementById("home").style.display="none";
+      document.getElementById("proxy-url-bar").value=url;
+      try{sessionStorage.setItem("kairo_last_url",url);}catch(e){}
+      frame.frame.addEventListener("load",function(){finishProgress();});
+      frame.go(url);
+      saveServerCookies();
+    }catch(e){finishProgress();showError("Failed: "+e.message);}
+  }).catch(function(e){finishProgress();showError("Transport failed: "+e.message);});
 }
 
 function closeProxy(){
